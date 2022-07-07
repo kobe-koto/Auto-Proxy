@@ -14,10 +14,29 @@ async function fetchAndApply(request) {
     //截取要proxy的位址。
     upstream_domain = url_host;
     for (i=0;i<DomainReplaceKey.length;i++) {
-        upstream_domain = upstream_domain.split("."+DomainReplaceKey[i]+".")[0];
+        upstream_domain = upstream_domain.split(DomainReplaceKey[i]+".")[0];
     }
     //替換 "-x-" 為 "."
-    upstream_domain = upstream_domain.replace(/-x-/gi,".");
+    upstream_domain = upstream_domain.replace(".","").replace(/-x-/gi,".");
+
+    if (upstream_domain == "") {
+    	return new Response("Here is a Cloudflare Workers Auto-Proxy Script. \r\n\r\n" +
+                            "Limits: 100,000 requests/day \r\n" + 
+                	        "          1,000 requests/10 minutes \r\n\r\n" + 
+                            "Usage: \r\n" +
+                            "       Domain you wants request: example.org \r\n" +
+                            "       Proxied Domain you should request: example-x-org." + url_host + "\r\n\r\n" + 
+                            "Deploy your own! See at Github (https://github.com/kobe-koto/auto-proxy-cf)\r\n\r\n" + 
+                            "Copyright NOW kobe-koto"
+                            ,
+        {
+			headers: {
+				'Content-Type':'application/json;charset=UTF-8',
+				'Access-Control-Allow-Origin':'*',
+				'Cache-Control':'no-store'
+			}
+	    });
+    }
 
     replace_dict = {
         '$upstream_domain': '$custom_domain',
