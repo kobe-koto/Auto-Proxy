@@ -72,34 +72,23 @@ async function fetchAndApply(request) {
     new_response_headers.delete('clear-site-data');
  
     const content_type = new_response_headers.get('content-type');
-    original_text = await replace_response_text(original_response_clone, upstream_domain, url_host);
-    response = new Response(original_text, {
+    console.log(content_type);
+
+    
+    if (content_type.match(/(text)/i)) {
+        replaced_text = await original_response_clone.text()
+
+        var ReplacerOriginalDomain = new RegExp(url_host,"gi");
+
+        replaced_text = replaced_text.replace(ReplacerOriginalDomain, upstream_domain);
+        console.log("replaced.")
+    } else {
+        replaced_text = await original_response_clone.blob()
+    }
+
+    response = new Response(replaced_text, {
         status,
         headers: new_response_headers
     })
     return response;
-}
- 
-async function replace_response_text(response, upstream_domain, host_name) {
-    let text = await response.text()
- 
-    var i, j;
-    for (i in replace_dict) {
-        j = replace_dict[i]
-        if (i == '$upstream') {
-            i = upstream_domain
-        } else if (i == '$custom_domain') {
-            i = host_name
-        }
- 
-        if (j == '$upstream') {
-            j = upstream_domain
-        } else if (j == '$custom_domain') {
-            j = host_name
-        }
- 
-        let re = new RegExp(i, 'g')
-        text = text.replace(re, j);
-    }
-    return text;
 }
