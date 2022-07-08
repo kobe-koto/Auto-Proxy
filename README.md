@@ -2,8 +2,8 @@
 **一個適用於 CF Workers 的自動按網域代理的脚本！**
 
 ## 使用方法: 
-1. 例如, 您要通過代理訪問: example.org , 且您的 Auto-Proxy-CF 網域是 foo.example.workers.dev .
-2. 那麽您應該訪問的網域是: example-x-org.foo.example.workers.dev
+1. 例如, 您要通過代理訪問: example.org , 且您的 Auto-Proxy-CF 網域是 foo.example.org .
+2. 那麽您應該訪問的網域是: example-x-org.foo.example.org
 2. 也就是說，您應該將要訪問的域名中的每個 "." 替換為 "-x-" .
 
 ## 限制:
@@ -12,6 +12,8 @@
 - 您的 CF Workers 付費計劃是 按需付費: 沒有限制，除了您的錢包。
 
 ## 部署
+
+### 請注意: 要部署該 Workers 服務, 您爲其必須綁定您自己的域名. 因爲:  1. Workers子域遭污染; 2. Workers 不支持匹配點部署到多個服務子域的子域上.
 
 1. 登錄您的 CF Dashboard.
 
