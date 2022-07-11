@@ -1,5 +1,5 @@
 //例如我auto-proxy的域名是 anti-fw.example.org 和 auto-proxy.example.org，就照下面這樣設置。
-const DomainReplaceKey = ["anti-fw","auto-proxy-test"];
+const DomainReplaceKey = ["anti-fw","anti-fw-cf","auto-proxy-test","auto-proxy"];
 
 addEventListener("fetch", event => {
     event.respondWith(fetchAndApply(event.request));
@@ -18,22 +18,25 @@ async function fetchAndApply(request) {
     ProxyDomain = ProxyDomain.replace(".","").replace(/-x-/gi,".");
 
     if (ProxyDomain === "") {
-        return new Response(
-            "Here is a Cloudflare Workers Auto-Proxy Script. \r\n\r\n" +
+        if (url.host.slice(-12) === ".workers.dev") {
+            ReturnUsage = "!!!!!! Auto-Proxy does not support \" *" + url.host.slice(-12) + " \" Subdomain now. !!!!!! \r\n\r\n";
+        } else {
+            ReturnUsage = "Usage: Domain you wants request: example.org \r\n" +
+                "       Proxied Domain you should request: example-x-org." + url.host + "\r\n\r\n";
+        }
+        return new Response("Here is a Cloudflare Workers Auto-Proxy Script. \r\n\r\n" +
             "Limits: 100,000 requests/day \r\n" +
             "          1,000 requests/10 minutes \r\n\r\n" +
-            "Usage: \r\n" +
-            "       Domain you wants request: example.org \r\n" +
-            "       Proxied Domain you should request: example-x-org." + url.host + "\r\n\r\n" +
+            ReturnUsage +
             "Deploy your own! See at Github (https://github.com/kobe-koto/auto-proxy-cf)\r\n\r\n" +
             "Copyright NOW kobe-koto"
-            , {
+            ,{
                 headers: {
-                    "Content-Type":"application/json;charset=UTF-8",
-                    "Access-Control-Allow-Origin":"*",
-                    "Cache-Control":"no-store"
+                    'Content-Type':'application/json;charset=UTF-8',
+                    'Access-Control-Allow-Origin':'*',
+                    'Cache-Control':'no-store'
                 }
-            });
+         });
     }
 
 
