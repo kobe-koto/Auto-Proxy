@@ -1,5 +1,12 @@
-//例如我auto-proxy的域名是 anti-fw.example.org 和 auto-proxy.example.org，就照下面這樣設置。
+//在此處設置你的 host domain ，例如是 auto-proxy.example.org 的話可以設置為 auto-proxy.example.org ， auto-proxy.example 以及 auto-proxy 。
 const DomainReplaceKey = ["anti-fw","anti-fw-cf","auto-proxy-test","auto-proxy"];
+
+//在此處設定允許的網域和屏蔽的網域。請注意：這兩個列表不能共存，若要取消設定，請將對應的變量設定為 undefined 。
+const AllowList = undefined;
+const BlockList = ["114514.jp"];
+
+//是否在請求被block的時候展示 可用/阻止 域名，Boolean類型，允許true和false。
+const ShowAvailableList = true;
 
 addEventListener("fetch", event => {
     event.respondWith(fetchAndApply(event.request));
@@ -12,17 +19,18 @@ async function fetchAndApply(request) {
     //截取要proxy的位址。
     ProxyDomain = url.host;
     for (i=0;i<DomainReplaceKey.length;i++) {
-        ProxyDomain = ProxyDomain.split(DomainReplaceKey[i]+".")[0];
+        ProxyDomain = ProxyDomain.split("."+DomainReplaceKey[i])[0];
     }
+
     //替換 "-x-" 為 "."
-    ProxyDomain = ProxyDomain.replace(".","").replace(/-x-/gi,".");
+    ProxyDomain = ProxyDomain.replace(/-x-/gi,".");
 
     if (ProxyDomain === "") {
         if (url.host.slice(-12) === ".workers.dev") {
-            ReturnUsage = "!!!!!! Auto-Proxy does not support \" *" + url.host.slice(-12) + " \" Subdomain now. !!!!!! \r\n\r\n";
+            ReturnUsage = "!!!!!! Auto-Proxy does not support \" *.workers.dev \" Subdomain now. !!!!!! \r\n\r\n";
         } else {
             ReturnUsage = "Usage: Domain you wants request: example.org \r\n" +
-                "       Proxied Domain you should request: example-x-org." + url.host + "\r\n\r\n";
+                "       Proxies Domain you should request: example-x-org." + url.host + "\r\n\r\n";
         }
         return new Response("Here is a Cloudflare Workers Auto-Proxy Script. \r\n\r\n" +
             "Limits: 100,000 requests/day \r\n" +
@@ -37,6 +45,40 @@ async function fetchAndApply(request) {
                     'Cache-Control':'no-store'
                 }
          });
+    }
+
+    if ((BlockList !== undefined) && (AllowList === undefined)) {
+        var BlockListText = "";
+        var b;
+        for (b in BlockList) {
+            text += BlockList[b] + " || ";
+        }
+        text=text.slice(0,-" || ".length)
+
+        return new Response("Domain in BlockList. \r\n\r\n Block List: \r\n" + text
+            ,{
+                headers: {
+                    'Content-Type':'application/json;charset=UTF-8',
+                    'Access-Control-Allow-Origin':'*',
+                    'Cache-Control':'no-store'
+                }
+            });
+    } else if ((BlockList === undefined) && (AllowList !== undefined)) {
+        var AllowListText = "";
+        var a;
+        for (a in AllowList) {
+            text += AllowList[a] + " || ";
+        }
+        text=text.slice(0,-" || ".length)
+
+        return new Response("Domain isn't in BlockList. \r\n\r\n Allow List: \r\n" + text
+            ,{
+                headers: {
+                    'Content-Type':'application/json;charset=UTF-8',
+                    'Access-Control-Allow-Origin':'*',
+                    'Cache-Control':'no-store'
+                }
+            });
     }
 
 
