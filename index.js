@@ -11,7 +11,7 @@ const ShowAvailableList = true;
 //設定代理的網址使用的protocol。支持 "http" 和 "https" 。
 const URLProtocol = "http";
 
-//選擇是否强制啓用緩存（需要瀏覽器支援），允許true和false。
+//選擇是否强制啓用緩存（需要瀏覽器支援），允許true和false （Boolean 值）。
 const EnableCache = true;
 
 //定義 i18n 字串。
