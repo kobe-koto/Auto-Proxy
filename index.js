@@ -85,14 +85,15 @@ async function fetchAndApply(request) {
     url.protocol = URLProtocol+":";
 
     //截取要proxy的位址。
-    ProxyDomain = url.host;
-    for (i=0;i<DomainReplaceKey.length;i++) {
+    let ProxyDomain = url.host;
+    for (let i=0;i<DomainReplaceKey.length;i++) {
         ProxyDomain = ProxyDomain.split("."+DomainReplaceKey[i])[0];
     }
 
     //替換 "-x-" 為 "."
     ProxyDomain = ProxyDomain.replace(/-x-/gi,".");
 
+    let ReturnUsage;
     if (ProxyDomain === "" || ProxyDomain === url.host) {
         if (url.host.slice(-12) === ".workers.dev") {
             ReturnUsage = i18nLang.WorkersDevNotSupport;
@@ -203,6 +204,8 @@ async function fetchAndApply(request) {
 
     const ContentType = NewResponseHeaders.get("content-type");
 
+    let ReplacedText;
+
     if (ContentType !== null && ContentType !== undefined) {
         if (ContentType.includes('text/html') && ContentType.includes('UTF-8')) {
             ReplacedText = await OriginalResponse.text()
@@ -215,9 +218,8 @@ async function fetchAndApply(request) {
         ReplacedText = OriginalResponse.body
     }
 
-    response = new Response(ReplacedText, {
+    return new Response(ReplacedText, {
         status,
         headers: NewResponseHeaders
-    })
-    return response;
+    });
 }
