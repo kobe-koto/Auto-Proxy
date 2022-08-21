@@ -73,7 +73,7 @@ async function fetchAndApply(request) {
     if (LangCode !== null) {
         LangCode = LangCode.toString().toLowerCase();
     }
-    if (LangCode === "zh" || LangCode === "hk" || LangCode === "tw" || LangCode === "mo") {
+    if (LangCode === "cn" || LangCode === "hk" || LangCode === "tw" || LangCode === "mo") {
         i18nLang = i18n.zh;
     } else if (LangCode === "jp") {
         i18nLang = i18n.jp;
@@ -98,12 +98,12 @@ async function fetchAndApply(request) {
         if (url.host.slice(-12) === ".workers.dev") {
             ReturnUsage = i18nLang.WorkersDevNotSupport;
         } else {
-            ReturnUsage = i18nLang.ReturnUsage+url.host+"\r\n";
+            ReturnUsage = i18nLang.ReturnUsage+url.host+"\r\n\r\n";
         }
         return new Response("" +
             i18nLang.Introduce +
-            i18nLang.Copyright +
             ReturnUsage +
+            i18nLang.Limit +
             i18nLang.Deploy +
             i18nLang.Copyright
             ,{
