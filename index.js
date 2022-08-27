@@ -20,67 +20,6 @@ const URLProtocol = "http";
 //選擇是否强制禁用緩存（需要瀏覽器支援），允許true和false （Boolean 值）。
 const DisableCache = true;
 
-//定義 i18n 字串。
-const i18n = {
-    "zh": {
-        "WorkersDevNotSupport": "!!!!!! Auto-Proxy 目前不支持 *.workers.dev 子域. !!!!!! \r\n\r\n",
-        "ReturnUsage": "使用方式: 您想要請求的域名是: example.org \r\n" +
-            "    那麽您應該請求: example-x-org.",
-        "Introduce": "這是一個基於 Cloudflare Workers 的自動代理脚本. \r\n\r\n",
-        "Limit": "請求限制: 每天 100,000 請求 \r\n" +
-            "    每10分鐘 1,000 請求 \r\n\r\n",
-        "Deploy": "部署你自己的 Auto Proxy ! 開源專案 Github 地址 (https://github.com/kobe-koto/auto-proxy-cf).\r\n",
-        "Copyright": "版權所有 kobe-koto, 使用 AGPL-3.0 許可證.\r\n",
-        "DomainBlocked": "域名在 BlockList 内. \r\n\r\n",
-        "DomainNotAllow": "域名不在 AllowList 内. \r\n\r\n",
-        "BlockList": "阻止的域名: \r\n",
-        "AllowList": "允許的域名: \r\n",
-        "ConfError": "配置錯誤. AllowList 和 BlockList 不能在同一時間被配置. \r\n",
-        "RegionBlocked": "您所在的地區已經被此站點屏蔽. ",
-        "IPBlocked": "您的 IP 位址已經被此站點屏蔽. "
-    },
-    "en": {
-        "WorkersDevNotSupport": "!!!!!! Auto-Proxy does not support \" *.workers.dev \" Subdomain now. !!!!!!\r\n",
-        "ReturnUsage": "Usage: Domain you wants request: example.org \r\n" +
-            "    Proxies Domain you should request: example-x-org.",
-        "Introduce": "Here is a Cloudflare Workers Auto-Proxy Script. \r\n\r\n",
-        "Limit": "Limits: 100,000 requests/day \r\n" +
-            "    1,000 requests/10 minutes \r\n\r\n",
-        "Deploy": "Deploy your own! See at Github (https://github.com/kobe-koto/auto-proxy-cf).\r\n",
-        "Copyright": "Copyright kobe-koto, Under AGPL-3.0 License.\r\n",
-        "DomainBlocked": "Domain in BlockList. \r\n\r\n",
-        "DomainNotAllow": "Domain isn't in AllowList. \r\n\r\n",
-        "BlockList": "Block List: \r\n",
-        "AllowList": "Allow List: \r\n",
-        "ConfError": "Configuration error. AllowList and BlockList cannot be configured at the same time.\r\n \r\n",
-        "RegionBlocked": "Your region has been blocked by this site. ",
-        "IPBlocked": "Your IP address has been blocked by this site. "
-    },
-    "jp": {
-        "WorkersDevNotSupport": "!!!!!!! 現在、Auto-Proxy は *.workers.dev サブドメインに対応していません. !!!!!!\r\n\r\n",
-        "ReturnUsage": "使用方法: リクエストしたいドメインは: example.org \r\n" +
-            "    リクエストする必要があるプロキシ ドメイン: example-x-org.",
-        "Introduce": "これは Cloudflare Workers をベースとした Auto Proxy スクリプトです。\r\n\r\n",
-        "Limit": "リクエストの上限: 100,000 リクエスト/24 hours, \r\n" +
-            "    1,000 リクエスト/10 minutes. \r\n\r\n",
-        "Deploy": "独自の Auto Proxy を導入する! オープンソースプロジェクトの Github アドレス (https://github.com/kobe-koto/auto-proxy-cf).\r\n",
-        "Copyright": "著作権者 kobe-koto, ライセンスは AGPL-3.0 です. \r\n",
-        "DomainBlocked": "ドメイン名は 「BlockList」 にあります. \r\n\r\n",
-        "DomainNotAllow": "ドメイン名が 「AllowList」 にありません. \r\n\r\n",
-        "BlockList": "ブロックされたドメイン: \r\n",
-        "AllowList": "許可されたドメイン: \r\n",
-        "ConfError": "設定エラーです. AllowList と BlockList を同時に構成することはできません. \r\n",
-        "RegionBlocked": "お住まいの地域はこのサイトからブロックされています. ",
-        "IPBlocked": "あなたの IP アドレスは、このサイトによってブロックされています. "
-    }
-}
-
-//定義UniHeader。。。你一般不需要操心這個東西。
-const UniHeader = {
-    'Content-Type':'application/json;charset=UTF-8',
-    'Access-Control-Allow-Origin':'*',
-    'Cache-Control':'no-store'
-};
 
 addEventListener("fetch", event => {
     event.respondWith(fetchAndApply(event.request));
@@ -132,7 +71,7 @@ async function fetchAndApply(request) {
     }
 
     //檢查用戶是不是在BlockRegion發起的請求。是則返回對應的403頁面。
-    if (!!BlockRegion && BlockRegion.includes(RegionCode)) {
+    if (request.headers.get('cf-ipcountry') !== null && !!BlockRegion && BlockRegion.includes(request.headers.get('cf-ipcountry'))) {
         return new Response(
             i18nLang.DomainBlocked +
             i18nLang.Deploy, {
@@ -142,7 +81,7 @@ async function fetchAndApply(request) {
     }
 
     //檢查用戶的IP是否在BlockIP内。是則返回對應的403頁面。
-    if (RegionCode !== null && !!BlockIP && BlockIP.includes(request.headers.get("cf-connecting-ip"))) {
+    if (request.headers.get("cf-connecting-ip") !== null && !!BlockIP && BlockIP.includes(request.headers.get("cf-connecting-ip"))) {
         return new Response(
             i18nLang.IPBlocked +
             i18nLang.Deploy, {
@@ -249,3 +188,64 @@ async function fetchAndApply(request) {
         headers: NewResponseHeaders
     });
 }
+//定義 i18n 字串。
+const i18n = {
+    "zh": {
+        "WorkersDevNotSupport": "!!!!!! Auto-Proxy 目前不支持 *.workers.dev 子域. !!!!!! \r\n\r\n",
+        "ReturnUsage": "使用方式: 您想要請求的域名是: example.org \r\n" +
+            "    那麽您應該請求: example-x-org.",
+        "Introduce": "這是一個基於 Cloudflare Workers 的自動代理脚本. \r\n\r\n",
+        "Limit": "請求限制: 每天 100,000 請求 \r\n" +
+            "    每10分鐘 1,000 請求 \r\n\r\n",
+        "Deploy": "部署你自己的 Auto Proxy ! 開源專案 Github 地址 (https://github.com/kobe-koto/auto-proxy-cf).\r\n",
+        "Copyright": "版權所有 kobe-koto, 使用 AGPL-3.0 許可證.\r\n",
+        "DomainBlocked": "域名在 BlockList 内. \r\n\r\n",
+        "DomainNotAllow": "域名不在 AllowList 内. \r\n\r\n",
+        "BlockList": "阻止的域名: \r\n",
+        "AllowList": "允許的域名: \r\n",
+        "ConfError": "配置錯誤. AllowList 和 BlockList 不能在同一時間被配置. \r\n",
+        "RegionBlocked": "您所在的地區已經被此站點屏蔽. ",
+        "IPBlocked": "您的 IP 位址已經被此站點屏蔽. "
+    },
+    "en": {
+        "WorkersDevNotSupport": "!!!!!! Auto-Proxy does not support \" *.workers.dev \" Subdomain now. !!!!!!\r\n",
+        "ReturnUsage": "Usage: Domain you wants request: example.org \r\n" +
+            "    Proxies Domain you should request: example-x-org.",
+        "Introduce": "Here is a Cloudflare Workers Auto-Proxy Script. \r\n\r\n",
+        "Limit": "Limits: 100,000 requests/day \r\n" +
+            "    1,000 requests/10 minutes \r\n\r\n",
+        "Deploy": "Deploy your own! See at Github (https://github.com/kobe-koto/auto-proxy-cf).\r\n",
+        "Copyright": "Copyright kobe-koto, Under AGPL-3.0 License.\r\n",
+        "DomainBlocked": "Domain in BlockList. \r\n\r\n",
+        "DomainNotAllow": "Domain isn't in AllowList. \r\n\r\n",
+        "BlockList": "Block List: \r\n",
+        "AllowList": "Allow List: \r\n",
+        "ConfError": "Configuration error. AllowList and BlockList cannot be configured at the same time.\r\n \r\n",
+        "RegionBlocked": "Your region has been blocked by this site. ",
+        "IPBlocked": "Your IP address has been blocked by this site. "
+    },
+    "jp": {
+        "WorkersDevNotSupport": "!!!!!!! 現在、Auto-Proxy は *.workers.dev サブドメインに対応していません. !!!!!!\r\n\r\n",
+        "ReturnUsage": "使用方法: リクエストしたいドメインは: example.org \r\n" +
+            "    リクエストする必要があるプロキシ ドメイン: example-x-org.",
+        "Introduce": "これは Cloudflare Workers をベースとした Auto Proxy スクリプトです。\r\n\r\n",
+        "Limit": "リクエストの上限: 100,000 リクエスト/24 hours, \r\n" +
+            "    1,000 リクエスト/10 minutes. \r\n\r\n",
+        "Deploy": "独自の Auto Proxy を導入する! オープンソースプロジェクトの Github アドレス (https://github.com/kobe-koto/auto-proxy-cf).\r\n",
+        "Copyright": "著作権者 kobe-koto, ライセンスは AGPL-3.0 です. \r\n",
+        "DomainBlocked": "ドメイン名は 「BlockList」 にあります. \r\n\r\n",
+        "DomainNotAllow": "ドメイン名が 「AllowList」 にありません. \r\n\r\n",
+        "BlockList": "ブロックされたドメイン: \r\n",
+        "AllowList": "許可されたドメイン: \r\n",
+        "ConfError": "設定エラーです. AllowList と BlockList を同時に構成することはできません. \r\n",
+        "RegionBlocked": "お住まいの地域はこのサイトからブロックされています. ",
+        "IPBlocked": "あなたの IP アドレスは、このサイトによってブロックされています. "
+    }
+}
+
+//定義UniHeader。。。你一般不需要操心這個東西。
+const UniHeader = {
+    'Content-Type':'application/json;charset=UTF-8',
+    'Access-Control-Allow-Origin':'*',
+    'Cache-Control':'no-store'
+};
