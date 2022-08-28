@@ -1,15 +1,22 @@
 # Auto-Proxy-CF
+
 **一個適用於 CF Workers 的自動按網域代理的脚本！**
 
 ## 使用方法: 
+
 1. 例如, 您要通過代理訪問: example.org , 且您的 Auto-Proxy-CF 網域是 foo.example.org .
-2. 那麽您應該訪問的網域是: example-x-org.foo.example.org
-2. 也就是說，您應該將要訪問的域名中的每個 "." 替換為 "-x-" .
+
+2. 那麽您應該訪問的網域是: example.org.foo.example.org.
+
+3. 也就是說，您應該將要訪問的域名後面加上您的 Auto-Proxy-CF 網域.
+
+4. 當然您也可以將要訪問的域名中的每個 "." 替換為 "-x-" , 然後再在後面加上您的 Auto-Proxy-CF 網域 (這是個 feature, 也是一個歷史遺留問題 (?) ).
 
 ## 限制:
 
-- 您的 CF Workers 付費計劃是 FREE: 每日100,000請求 && 每十分鐘1,000請求；
-- 您的 CF Workers 付費計劃是 按需付費: 沒有限制，除了您的錢包。
+- 您的 CF Workers 付費計劃是 FREE: 每日100,000請求 && 每十分鐘1,000請求;
+
+- 您的 CF Workers 付費計劃是 按需付費: 沒有限制，除了您的錢包.
 
 ## 部署
 
