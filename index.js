@@ -14,33 +14,33 @@ const BlockIP = ["192.168.254.78","192.168.254.87"];
 //是否在請求被block的時候展示 可用/阻止 域名，Boolean類型，允許true和false。
 const ShowAvailableList = true;
 
-//設定代理的網址使用的protocol。支持 "http" 和 "https" 。
-const URLProtocol = "http";
+//設定代理的網址使用的protocol。支持 "http" 和 "https" , 若設爲 false 則尊重原始請求。
+const URLProtocol = false;
 
 //選擇是否强制禁用緩存（需要瀏覽器支援），允許true和false （Boolean 值）。
 const DisableCache = true;
-
 
 addEventListener("fetch", event => {
     event.respondWith(fetchAndApply(event.request));
 })
 
 async function fetchAndApply(request) {
-    let i18nLang;
-    let RegionCode = request.headers.get('cf-ipcountry');
-    if (RegionCode !== null && RegionCode !== undefined) {
-        RegionCode = RegionCode.toString().toLowerCase();
-    }
-    if (RegionCode === "cn" || RegionCode === "hk" || RegionCode === "tw" || RegionCode === "mo") {
-        i18nLang = i18n.zh;
-    } else if (RegionCode === "jp") {
-        i18nLang = i18n.jp;
-    } else {
-        i18nLang = i18n.en;
+    let RegionCode;
+    if (
+        request.headers.get('cf-ipcountry') !== null &&
+        !i18n.includes(request.headers.get('cf-ipcountry').toString().toLowerCase())
+    ) {
+        RegionCode = "en";
+    } else if (
+        request.headers.get('cf-ipcountry') === null
+    ) {
+        RegionCode = "en";
     }
 
     let url = new URL(request.url);
-    url.protocol = URLProtocol+":";
+    if (URLProtocol) {
+        url.protocol = URLProtocol+":";
+    }
 
     //截取要proxy的位址。
     let ProxyDomain = url.host;
@@ -55,16 +55,16 @@ async function fetchAndApply(request) {
     let ReturnUsage;
     if (ProxyDomain === "" || ProxyDomain === url.host) {
         if (url.host.slice(-12) === ".workers.dev") {
-            ReturnUsage = i18nLang.WorkersDevNotSupport;
+            ReturnUsage = i18n[RegionCode].WorkersDevNotSupport;
         } else {
-            ReturnUsage = i18nLang.ReturnUsage+url.host+"\r\n\r\n";
+            ReturnUsage = i18n[RegionCode].ReturnUsage+url.host+"\r\n\r\n";
         }
         return new Response("" +
-            i18nLang.Introduce +
+            i18n[RegionCode].Introduce +
             ReturnUsage +
-            i18nLang.Limit +
-            i18nLang.Deploy +
-            i18nLang.Copyright
+            i18n[RegionCode].Limit +
+            i18n[RegionCode].Deploy +
+            i18n[RegionCode].Copyright
             ,{
                 headers: UniHeader
             });
@@ -73,8 +73,8 @@ async function fetchAndApply(request) {
     //檢查用戶是不是在BlockRegion發起的請求。是則返回對應的403頁面。
     if (request.headers.get('cf-ipcountry') !== null && !!BlockRegion && BlockRegion.includes(request.headers.get('cf-ipcountry'))) {
         return new Response(
-            i18nLang.DomainBlocked +
-            i18nLang.Deploy, {
+            i18n[RegionCode].DomainBlocked +
+            i18n[RegionCode].Deploy, {
             headers: UniHeader,
             status:403
         });
@@ -83,8 +83,8 @@ async function fetchAndApply(request) {
     //檢查用戶的IP是否在BlockIP内。是則返回對應的403頁面。
     if (request.headers.get("cf-connecting-ip") !== null && !!BlockIP && BlockIP.includes(request.headers.get("cf-connecting-ip"))) {
         return new Response(
-            i18nLang.IPBlocked +
-            i18nLang.Deploy, {
+            i18n[RegionCode].IPBlocked +
+            i18n[RegionCode].Deploy, {
             headers: UniHeader,
             status:403
         });
@@ -92,7 +92,7 @@ async function fetchAndApply(request) {
 
     //檢查用戶請求的ProxyDomain是否在BlockList内或AllowList外，是則返回403頁面。
     if (BlockList !== undefined && AllowList === undefined && BlockList.includes(ProxyDomain)) {
-        let BlockListText = i18nLang.BlockList;
+        let BlockListText = i18n[RegionCode].BlockList;
         if (ShowAvailableList) {
             let b;
             for (b in BlockList) {
@@ -106,12 +106,12 @@ async function fetchAndApply(request) {
             BlockListText = "";
         }
 
-        return new Response(i18nLang.DomainBlocked + BlockListText, {
+        return new Response(i18n[RegionCode].DomainBlocked + BlockListText, {
             headers: UniHeader,
             status:403
         });
     } else if (BlockList === undefined && AllowList !== undefined && !AllowList.includes(ProxyDomain)) {
-        let AllowListText = i18nLang.AllowList;
+        let AllowListText = i18n[RegionCode].AllowList;
         if (ShowAvailableList) {
             let b;
             for (b in AllowList) {
@@ -125,13 +125,13 @@ async function fetchAndApply(request) {
             AllowListText = "";
         }
 
-        return new Response(i18nLang.DomainNotAllow + AllowListText, {
+        return new Response(i18n[RegionCode].DomainNotAllow + AllowListText, {
             headers: UniHeader,
             status:403
         });
     } else if ((BlockList !== undefined) && (AllowList !== undefined)){
         //（靠北哦怎麽會有人這樣子搞的）
-        return new Response(i18nLang.ConfError,{
+        return new Response(i18n[RegionCode].ConfError,{
             headers: UniHeader
         });
     }
@@ -188,9 +188,61 @@ async function fetchAndApply(request) {
         headers: NewResponseHeaders
     });
 }
+
 //定義 i18n 字串。
 const i18n = {
-    "zh": {
+    "cn": {
+        "WorkersDevNotSupport": "!!!!!! Auto-Proxy 目前不支持 *.workers.dev 子域. !!!!!! \r\n\r\n",
+        "ReturnUsage": "使用方式: 您想要请求的域名是: example.org \r\n" +
+            "    那么您应该请求: example-x-org.",
+        "Introduce": "这是一个基于 Cloudflare Workers 的自动代理脚本. \r\n\r\n",
+        "Limit": "请求限制: 每天 100,000 请求 \r\n" +
+            "    每10分钟 1,000 请求 \r\n\r\n",
+        "Deploy": "部署你自己的 Auto Proxy ! Github 地址 (https://github.com/kobe-koto/auto-proxy-cf).\r\n",
+        "Copyright": "版权所有 kobe-koto, 使用 AGPL-3.0 许可证.\r\n",
+        "DomainBlocked": "域名在 BlockList 内. \r\n\r\n",
+        "DomainNotAllow": "域名不在 AllowList 内. \r\n\r\n",
+        "BlockList": "阻止的域名: \r\n",
+        "AllowList": "允许的域名: \r\n",
+        "ConfError": "配置错误. AllowList 和 BlockList 不能在同一时间被配置. \r\n",
+        "RegionBlocked": "您所在的地区已经被此站点屏蔽. ",
+        "IPBlocked": "您的 IP 位址已经被此站点屏蔽. "
+    },
+    "tw": {
+        "WorkersDevNotSupport": "!!!!!! Auto-Proxy 目前不支持 *.workers.dev 子域. !!!!!! \r\n\r\n",
+        "ReturnUsage": "使用方式: 您想要請求的域名是: example.org \r\n" +
+            "    那麽您應該請求: example-x-org.",
+        "Introduce": "這是一個基於 Cloudflare Workers 的自動代理脚本. \r\n\r\n",
+        "Limit": "請求限制: 每天 100,000 請求 \r\n" +
+            "    每10分鐘 1,000 請求 \r\n\r\n",
+        "Deploy": "部署你自己的 Auto Proxy ! 開源專案 Github 地址 (https://github.com/kobe-koto/auto-proxy-cf).\r\n",
+        "Copyright": "版權所有 kobe-koto, 使用 AGPL-3.0 許可證.\r\n",
+        "DomainBlocked": "域名在 BlockList 内. \r\n\r\n",
+        "DomainNotAllow": "域名不在 AllowList 内. \r\n\r\n",
+        "BlockList": "阻止的域名: \r\n",
+        "AllowList": "允許的域名: \r\n",
+        "ConfError": "配置錯誤. AllowList 和 BlockList 不能在同一時間被配置. \r\n",
+        "RegionBlocked": "您所在的地區已經被此站點屏蔽. ",
+        "IPBlocked": "您的 IP 位址已經被此站點屏蔽. "
+    },
+    "hk": {
+        "WorkersDevNotSupport": "!!!!!! Auto-Proxy 目前不支持 *.workers.dev 子域. !!!!!! \r\n\r\n",
+        "ReturnUsage": "使用方式: 您想要請求的域名是: example.org \r\n" +
+            "    那麽您應該請求: example-x-org.",
+        "Introduce": "這是一個基於 Cloudflare Workers 的自動代理脚本. \r\n\r\n",
+        "Limit": "請求限制: 每天 100,000 請求 \r\n" +
+            "    每10分鐘 1,000 請求 \r\n\r\n",
+        "Deploy": "部署你自己的 Auto Proxy ! 開源專案 Github 地址 (https://github.com/kobe-koto/auto-proxy-cf).\r\n",
+        "Copyright": "版權所有 kobe-koto, 使用 AGPL-3.0 許可證.\r\n",
+        "DomainBlocked": "域名在 BlockList 内. \r\n\r\n",
+        "DomainNotAllow": "域名不在 AllowList 内. \r\n\r\n",
+        "BlockList": "阻止的域名: \r\n",
+        "AllowList": "允許的域名: \r\n",
+        "ConfError": "配置錯誤. AllowList 和 BlockList 不能在同一時間被配置. \r\n",
+        "RegionBlocked": "您所在的地區已經被此站點屏蔽. ",
+        "IPBlocked": "您的 IP 位址已經被此站點屏蔽. "
+    },
+    "mo": {
         "WorkersDevNotSupport": "!!!!!! Auto-Proxy 目前不支持 *.workers.dev 子域. !!!!!! \r\n\r\n",
         "ReturnUsage": "使用方式: 您想要請求的域名是: example.org \r\n" +
             "    那麽您應該請求: example-x-org.",
