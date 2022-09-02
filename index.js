@@ -25,20 +25,22 @@ addEventListener("fetch", event => {
 })
 
 async function fetchAndApply(request) {
-    let RegionCode;
-    if (
-        request.headers.get('cf-ipcountry') !== null &&
-        !i18n.includes(request.headers.get('cf-ipcountry').toString().toLowerCase())
-    ) {
-        RegionCode = "en";
-    } else if (
-        request.headers.get('cf-ipcountry') === null
-    ) {
-        RegionCode = "en";
-    }
+    let RegionCode = (function () {
+        if (
+            request.headers.get('cf-ipcountry') !== null &&
+            !!i18n[request.headers.get('cf-ipcountry').toString().toLowerCase()]
+        ) {
+            return request.headers.get('cf-ipcountry').toString().toLowerCase();
+        } else if (
+            request.headers.get('cf-ipcountry') === null
+        ) {
+            return "en";
+        }
+    })()
+
 
     let url = new URL(request.url);
-    if (URLProtocol) {
+    if (!!URLProtocol) {
         url.protocol = URLProtocol+":";
     }
 
