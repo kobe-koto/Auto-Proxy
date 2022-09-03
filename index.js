@@ -20,6 +20,11 @@ const URLProtocol = false;
 //選擇是否强制禁用緩存（需要瀏覽器支援），允許true和false （Boolean 值）。
 const DisableCache = true;
 
+//域名映射表。例如" 'github': 'github.com' = github.example.org => github.com 。
+const DomainMap = {
+    "github": "github.com"
+}
+
 addEventListener("fetch", event => {
     event.respondWith(fetchAndApply(event.request));
 })
@@ -27,12 +32,12 @@ addEventListener("fetch", event => {
 async function fetchAndApply(request) {
     let RegionCode = (function () {
         if (
-            request.headers.get('cf-ipcountry') !== null &&
-            !!i18n[request.headers.get('cf-ipcountry').toString().toLowerCase()]
+            request.headers.get("cf-ipcountry") !== null &&
+            !!i18n[request.headers.get("cf-ipcountry").toString().toLowerCase()]
         ) {
-            return request.headers.get('cf-ipcountry').toString().toLowerCase();
+            return request.headers.get("cf-ipcountry").toString().toLowerCase();
         } else if (
-            request.headers.get('cf-ipcountry') === null
+            request.headers.get("cf-ipcountry") === null
         ) {
             return "en";
         }
@@ -44,7 +49,7 @@ async function fetchAndApply(request) {
         url.protocol = URLProtocol+":";
     }
 
-    //截取要proxy的位址。
+    //定義要proxy的位址。
     let ProxyDomain = url.host;
     for (let i=0;i<DomainReplaceKey.length;i++) {
         ProxyDomain = ProxyDomain.split("."+DomainReplaceKey[i])[0];
@@ -53,84 +58,98 @@ async function fetchAndApply(request) {
     //替換 "-x-" 為 "."。
     ProxyDomain = ProxyDomain.replace(/-x-/gi,".");
 
+    //替換 "-p-" 為 ":"。
+    ProxyDomain = ProxyDomain.replace(/-p-/gi,":");
+
+    //ProxyDomain的值在DomainMap裏面時，替換ProxyDomain的值為DomainMap裏面存儲的值。
+    if (!!DomainMap[ProxyDomain]) {
+        ProxyDomain = DomainMap[ProxyDomain];
+    }
+
     //如果用戶請求了主域名則返回提示。
-    let ReturnUsage;
+
     if (ProxyDomain === "" || ProxyDomain === url.host) {
-        if (url.host.slice(-12) === ".workers.dev") {
-            ReturnUsage = i18n[RegionCode].WorkersDevNotSupport;
-        } else {
-            ReturnUsage = i18n[RegionCode].ReturnUsage+url.host+"\r\n\r\n";
-        }
+
+        let ReturnUsage = (function () {
+            if (url.host.slice(-12) === ".workers.dev") {
+                return i18n[RegionCode].WorkersDevNotSupport;
+            } else {
+                return i18n[RegionCode].ReturnUsage+url.host+"\r\n\r\n";
+            }
+        })()
+
         return new Response("" +
             i18n[RegionCode].Introduce +
             ReturnUsage +
             i18n[RegionCode].Limit +
             i18n[RegionCode].Deploy +
-            i18n[RegionCode].Copyright
-            ,{
-                headers: UniHeader
-            });
+            i18n[RegionCode].Copyright,
+            { headers: UniHeader }
+        );
     }
 
     //檢查用戶是不是在BlockRegion發起的請求。是則返回對應的403頁面。
-    if (request.headers.get('cf-ipcountry') !== null && !!BlockRegion && BlockRegion.includes(request.headers.get('cf-ipcountry'))) {
+    if (request.headers.get("cf-ipcountry") !== null && !!BlockRegion && BlockRegion.includes(request.headers.get("cf-ipcountry"))) {
         return new Response(
             i18n[RegionCode].DomainBlocked +
-            i18n[RegionCode].Deploy, {
-            headers: UniHeader,
-            status:403
-        });
+            i18n[RegionCode].Deploy,
+            { headers: UniHeader, status:403 }
+        );
     }
 
     //檢查用戶的IP是否在BlockIP内。是則返回對應的403頁面。
     if (request.headers.get("cf-connecting-ip") !== null && !!BlockIP && BlockIP.includes(request.headers.get("cf-connecting-ip"))) {
         return new Response(
             i18n[RegionCode].IPBlocked +
-            i18n[RegionCode].Deploy, {
-            headers: UniHeader,
-            status:403
-        });
+            i18n[RegionCode].Deploy,
+            { headers: UniHeader, status:403 }
+        );
     }
 
     //檢查用戶請求的ProxyDomain是否在BlockList内或AllowList外，是則返回403頁面。
     if (BlockList !== undefined && AllowList === undefined && BlockList.includes(ProxyDomain)) {
-        let BlockListText = i18n[RegionCode].BlockList;
-        if (ShowAvailableList) {
-            let b;
-            for (b in BlockList) {
-                if (b.toString() === (BlockList.length - 1).toString()) {
-                    BlockListText += " " + BlockList[b];
-                } else {
-                    BlockListText += " " + BlockList[b] + "\r\n";
-                }
-            }
-        } else {
-            BlockListText = "";
-        }
 
-        return new Response(i18n[RegionCode].DomainBlocked + BlockListText, {
-            headers: UniHeader,
-            status:403
-        });
+        let BlockListText = (function (){
+            if (ShowAvailableList) {
+                let ReturnValue = i18n[RegionCode].BlockList;
+                for (let b in BlockList) {
+                    ReturnValue += " " + BlockList[b] + "\r\n";
+                }
+                return ReturnValue;
+            } else {
+                return "";
+            }
+        })()
+
+        return new Response(
+            i18n[RegionCode].DomainBlocked +
+            BlockListText +
+            i18n[RegionCode].Deploy,
+            { headers: UniHeader, status:403 }
+        );
+
     } else if (BlockList === undefined && AllowList !== undefined && !AllowList.includes(ProxyDomain)) {
-        let AllowListText = i18n[RegionCode].AllowList;
-        if (ShowAvailableList) {
-            let b;
-            for (b in AllowList) {
-                if (b.toString() === (AllowList.length - 1).toString()) {
-                    AllowListText += " " + AllowList[b];
-                } else {
-                    AllowListText += " " + AllowList[b] + "\r\n";
-                }
-            }
-        } else {
-            AllowListText = "";
-        }
 
-        return new Response(i18n[RegionCode].DomainNotAllow + AllowListText, {
-            headers: UniHeader,
-            status:403
-        });
+
+        let AllowListText = (function (){
+            if (ShowAvailableList) {
+                let ReturnValue = i18n[RegionCode].AllowList;
+                for (let b in AllowList) {
+                    ReturnValue += " " + AllowList[b] + "\r\n";
+                }
+                return ReturnValue;
+            } else {
+                return "";
+            }
+        })()
+
+        return new Response(
+            i18n[RegionCode].DomainNotAllow +
+            AllowListText +
+            i18n[RegionCode].Deploy,
+            { headers: UniHeader, status:403 }
+        );
+
     } else if ((BlockList !== undefined) && (AllowList !== undefined)){
         //（靠北哦怎麽會有人這樣子搞的）
         return new Response(i18n[RegionCode].ConfError,{
@@ -161,7 +180,7 @@ async function fetchAndApply(request) {
 
     //如果用戶配置了强制禁用緩存則設置Cache-Control標頭為no-store。
     if (DisableCache) {
-        NewResponseHeaders.set('Cache-Control', 'no-store');
+        NewResponseHeaders.set("cache-control", "no-store");
     }
 
     NewResponseHeaders.set("access-control-allow-origin", "*");
@@ -174,7 +193,13 @@ async function fetchAndApply(request) {
 
     let ReplacedText;
     if (ContentType !== null && ContentType !== undefined) {
-        if (ContentType.includes('text/html') && ContentType.includes('UTF-8')) {
+        if (
+            (
+                ContentType.includes("text/html") ||
+                ContentType.includes("text/javascript") ||
+                ContentType.includes("text/css")
+            ) && ContentType.includes("UTF-8")
+        ) {
             ReplacedText = await OriginalResponse.text()
             let ReplacerOriginalDomain = new RegExp(url.host,"gi");
             ReplacedText = ReplacedText.replace(ReplacerOriginalDomain, ProxyDomain);
@@ -299,7 +324,7 @@ const i18n = {
 
 //定義UniHeader。。。你一般不需要操心這個東西。
 const UniHeader = {
-    'Content-Type':'application/json;charset=UTF-8',
-    'Access-Control-Allow-Origin':'*',
-    'Cache-Control':'no-store'
+    "Content-Type": "application/json;charset=UTF-8",
+    "Access-Control-Allow-Origin": "*",
+    "Cache-Control": "no-store"
 };
