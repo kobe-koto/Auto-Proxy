@@ -1,5 +1,5 @@
 //在此處設置你的 host domain ，例如是 auto-proxy.example.org 的話可以設置為 auto-proxy.example.org ， auto-proxy.example 以及 auto-proxy 。
-const DomainReplaceKey = ["anti-fw","anti-fw-cf","auto-proxy-test","auto-proxy"];
+const DomainReplaceKey = ["auto-proxy.example.org","auto-proxy.example","auto-proxy"];
 
 //在此處設定允許的網域和屏蔽的網域。請注意：這兩個列表不能共存，若要取消設定，請將對應的變量設定為 undefined 。
 const AllowList = undefined;
