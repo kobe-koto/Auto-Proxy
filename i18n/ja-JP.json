@@ -1,0 +1,15 @@
+{
+  "WorkersDevNotSupport": "!!!!!!! 現在、Auto-Proxy は *.workers.dev サブドメインに対応していません. !!!!!!\r\n\r\n",
+  "ReturnUsage": "使用方法: リクエストしたいドメインは: example.org \r\n    リクエストする必要があるプロキシ ドメイン: example-x-org.",
+  "Introduce": "これは Cloudflare Workers をベースとした Auto Proxy スクリプトです。\r\n\r\n",
+  "Limit": "リクエストの上限: 100,000 リクエスト/24 hours, \r\n    1,000 リクエスト/10 minutes. \r\n\r\n",
+  "Deploy": "独自の Auto Proxy を導入する! オープンソースプロジェクトの Github アドレス (https://github.com/kobe-koto/auto-proxy-cf).\r\n",
+  "Copyright": "著作権者 kobe-koto, ライセンスは AGPL-3.0 です. \r\n",
+  "DomainBlocked": "ドメイン名は 「BlockList」 にあります. \r\n\r\n",
+  "DomainNotAllow": "ドメイン名が 「AllowList」 にありません. \r\n\r\n",
+  "BlockList": "ブロックされたドメイン: \r\n",
+  "AllowList": "許可されたドメイン: \r\n",
+  "ConfError": "設定エラーです. AllowList と BlockList を同時に構成することはできません. \r\n",
+  "RegionBlocked": "お住まいの地域はこのサイトからブロックされています. ",
+  "IPBlocked": "あなたの IP アドレスは、このサイトによってブロックされています. "
+}
