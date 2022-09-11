@@ -1,0 +1,15 @@
+{
+  "WorkersDevNotSupport": "!!!!!! Auto-Proxy does not support \" *.workers.dev \" Subdomain now. !!!!!!\r\n",
+  "ReturnUsage": "Usage: Domain you wants request: example.org \r\n    Proxies Domain you should request: example-x-org.",
+  "Introduce": "Here is a Cloudflare Workers Auto-Proxy Script. \r\n\r\n",
+  "Limit": "Limits: 100,000 requests/day \r\n    1,000 requests/10 minutes \r\n\r\n",
+  "Deploy": "Deploy your own! See at Github (https://github.com/kobe-koto/auto-proxy-cf).\r\n",
+  "Copyright": "Copyright kobe-koto, Under AGPL-3.0 License.\r\n",
+  "DomainBlocked": "Domain in BlockList. \r\n\r\n",
+  "DomainNotAllow": "Domain isn't in AllowList. \r\n\r\n",
+  "BlockList": "Block List: \r\n",
+  "AllowList": "Allow List: \r\n",
+  "ConfError": "Configuration error. AllowList and BlockList cannot be configured at the same time.\r\n \r\n",
+  "RegionBlocked": "Your region has been blocked by this site. ",
+  "IPBlocked": "Your IP address has been blocked by this site. "
+}

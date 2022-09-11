@@ -20,7 +20,7 @@ const URLProtocol = false;
 //選擇是否强制禁用緩存（需要瀏覽器支援），允許true和false （Boolean 值）。
 const DisableCache = true;
 
-//域名映射表。例如" 'github': 'github.com' = github.example.org => github.com 。
+//域名映射表。例如" 'github': 'github.com' " = github.example.org => github.com 。
 const DomainMap = {
     "github": "github.com"
 }
@@ -30,15 +30,34 @@ addEventListener("fetch", event => {
 })
 
 async function fetchAndApply(request) {
+
+    // fetch the i18n data from GitHub, save to KV.
+    let LangCode = (function (){
+        return "en";
+/*        if (
+            request.headers.get("accept-language") !== null
+        ) {
+            return request.headers.get("accept-language");
+        } else {
+            return "en";
+        }*/
+    })()
+
+    let i18nData = await (async function (){
+        let LangData = await AutoProxySpace.get(LangCode);
+        if (LangData === null) {
+            let LangData = await fetch("")
+        }
+    })()
+    console.log(i18nData);
+
     let RegionCode = (function () {
         if (
-            request.headers.get("cf-ipcountry") !== null &&
+            request.headers.get("accept-language") !== null &&
             !!i18n[request.headers.get("cf-ipcountry").toString().toLowerCase()]
         ) {
             return request.headers.get("cf-ipcountry").toString().toLowerCase();
-        } else if (
-            request.headers.get("cf-ipcountry") === null
-        ) {
+        } else {
             return "en";
         }
     })()
