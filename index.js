@@ -20,7 +20,7 @@ const URLProtocol = false;
 //選擇是否强制禁用緩存（需要瀏覽器支援），允許true和false （Boolean 值）。
 const DisableCache = true;
 
-//域名映射表。例如" 'github': 'github.com' = github.example.org => github.com 。
+//域名映射表。例如" {'github': 'github.com'} " 的 github.example.org => github.com 。
 const DomainMap = {
     "github": "github.com"
 }
@@ -36,13 +36,10 @@ async function fetchAndApply(request) {
             !!i18n[request.headers.get("cf-ipcountry").toString().toLowerCase()]
         ) {
             return request.headers.get("cf-ipcountry").toString().toLowerCase();
-        } else if (
-            request.headers.get("cf-ipcountry") === null
-        ) {
+        } else {
             return "en";
         }
     })()
-
 
     let url = new URL(request.url);
     if (!!URLProtocol) {
