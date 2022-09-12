@@ -67,34 +67,6 @@ async function fetchAndApply(request) {
     //如果用戶請求了主域名則返回提示。
 
     if (ProxyDomain === "" || ProxyDomain === url.host) {
-
-        function GetQueryString(name) {
-            let reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)", "i");
-            let r = url.search.substr(1).match(reg);
-
-            if (r != null) {return r[2];} else {return null;}
-        }
-
-        let config = await AutoProxySpace.get("_config");
-        if (
-            config === null &&
-            url.pathname === "/"
-        ) {
-            return Response.redirect(
-                url.protocol +
-                "//" +
-                url.host  +
-                "/panel/",
-                307)
-        }
-        if (url.pathname === "/panel/check") {
-            if (Password === GetQueryString("password")) {
-                return new Response("true",
-                    {headers: UniHeader});
-            }
-        }
-
-
         let ReturnUsage = (function () {
             if (url.host.slice(-12) === ".workers.dev") {
                 return i18nData.WorkersDevNotSupport;
