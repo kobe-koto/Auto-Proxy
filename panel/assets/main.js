@@ -12,3 +12,52 @@ async function CheckPassword (Element) {
         document.getElementById("PasswordStatus").innerText = "INCORRECT"
     }
 }
+function SetConfig () {
+    let HostDomain =
+            document.getElementById("HostDomain").value.toArray(),
+        BlockRegion =
+            document.getElementById("BlockRegion").value.toArray(),
+        BlockIP =
+            document.getElementById("BlockIP").value.toArray(),
+        ShowAvailableList =
+            document.getElementById("ShowAvailableList").checked,
+    AllowList = (function (){
+        if (document.getElementById("AllowList").checked) {
+            return undefined
+        } else {
+            return document.getElementById("AllowListTextarea").value.toArray()
+        }
+    })(),
+        BlockList = (function (){
+        if (document.getElementById("BlockList").checked) {
+            return undefined
+        } else {
+            return document.getElementById("BlockListTextarea").value.toArray()
+        }
+    })()
+
+}
+function RadioChanged (element) {
+    if (element.checked) {
+        document.getElementById(element.id+"Textarea").style.display = "block"
+        if (element.id === "AllowList") {
+            document.getElementById("BlockListTextarea").style.display = "none"
+        } else {
+            document.getElementById("AllowListTextarea").style.display = "none"
+        }
+    }
+}
+
+String.prototype.toArray = function(){
+    let Array = this
+        .replace(/\r/gi, "")
+        .replace(/\n/gi, "")
+        .replace(/ /gi, "")
+        .split(",");
+    if (Array.length === 1 || Array.length === 0) {
+        return false
+    } else {
+        return Array;
+    }
+}
+

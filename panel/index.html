@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Config Your Auto-Proxy.</title>
+    <link rel="stylesheet" href="./assets/main.css">
+    <script src="./assets/main.js"></script>
+</head>
+<body>
+    <h1>Config your Auto-Proxy.</h1>
+
+    <div class="line"></div>
+
+    <h2>Password is <a id="PasswordStatus">REQUIRED</a>.</h2>
+    <label>
+        <input type="password" placeholder="Please input your P@$$w0rd here">
+        <button onclick="CheckPassword(this)">Check</button>
+    </label>
+
+    <div class="line"></div>
+
+    <table><tbody>
+
+        <tr>
+            <td>Show Available List
+                <br/>
+                <span style="font-size: small">是否在請求的域名被block的時候展示 可用/阻止 域名.</span>
+            </td>
+            <td>
+                <label class="switch">
+                    <input type="checkbox" id="ShowAvailableList">
+                    <span class="slider round"></span>
+                </label>
+            </td>
+        </tr>
+
+        <tr>
+            <td>Disable Cache
+                <br/>
+                <span style="font-size: small">選擇是否强制禁用緩存（需要瀏覽器支援）.</span>
+            </td>
+            <td>
+                <label class="switch">
+                    <input type="checkbox" id="Disable Cache">
+                    <span class="slider round"></span>
+                </label>
+            </td>
+        </tr>
+
+    </tbody></table>
+
+    <div class="line"></div>
+
+    <h2>Your Host Domain</h2>
+
+    <label>
+        <!--請在此輸入您的HostDomain, 以英文逗號(" , ")分割. 換行符和空格將會被忽略.-->
+        <textarea
+                id="HostDomain"
+                placeholder="
+                Please enter your HostDomain here, separated by commas (' , '). Newlines and spaces will be ignored.
+                Example:
+
+                  foo.example.workers.dev,
+                  foo.example.org"
+        ></textarea>
+    </label>
+
+    <div class="line"></div>
+
+    <h2>Blocked Region</h2>
+
+    <label>
+        <!--請在此輸入您的HostDomain, 以英文逗號(" , ")分割. 換行符和空格將會被忽略.-->
+        <textarea
+                id="BlockRegion"
+                placeholder="
+                Please enter Blocked Region Code here, separated by commas (' , '). Newlines and spaces will be ignored.
+                Example:
+
+                  xy,
+                  xx"
+        ></textarea>
+    </label>
+
+    <div class="line"></div>
+
+    <h2>Blocked IP Address</h2>
+
+    <label>
+        <!--請在此輸入您的HostDomain, 以英文逗號(" , ")分割. 換行符和空格將會被忽略.-->
+        <textarea
+                id="BlockIP"
+                placeholder="
+                Please enter Blocked IP Address here, separated by commas (' , '). Newlines and spaces will be ignored.
+                Example:
+
+                  192.168.254.78,
+                  192.168.254.87"
+        ></textarea>
+    </label>
+
+    <div class="line"></div>
+
+    <fieldset>
+        <h2>Allow or Block</h2>
+
+        <div>
+            <input type="radio" name="chooses" id="AllowList" onclick="RadioChanged(this)" />
+            <label for="AllowList">AllowList</label>
+
+            <label for="AllowListTextarea"></label>
+            <textarea
+                    name=""
+                    id="AllowListTextarea"
+                    style="display: none;margin: 15px auto;"
+                    placeholder="
+                Please enter Allowed Domain Address here, separated by commas (' , '). Newlines and spaces will be ignored.
+                Example:
+
+                  114514.jp,
+                  114514.cn"
+            ></textarea>
+        </div>
+
+        <div>
+            <input type="radio" name="chooses" id="BlockList" onclick="RadioChanged(this)" checked />
+            <label for="BlockList">BlockList</label>
+
+            <label for="BlockListTextarea"></label>
+            <textarea
+                    name=""
+                    id="BlockListTextarea"
+                    style="display: block;margin: 15px auto;"
+                    placeholder="
+                Please enter Blocked Domain Address here, separated by commas (' , '). Newlines and spaces will be ignored.
+                Example:
+
+                  114514.jp,
+                  114514.cn"></textarea>
+        </div>
+
+    </fieldset>
+
+
+</body>
+</html>
