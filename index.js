@@ -7,7 +7,7 @@ addEventListener("fetch", event => {
 
 async function fetchAndApply(request) {
 
-    let config = await AutoProxySpace.get("_config");
+    let config = (await AutoProxySpace.get("_config") || {});
 
     let i18nData = await GetI18NData (request);
 
@@ -54,6 +54,13 @@ async function fetchAndApply(request) {
                 url.host  +
                 "/panel/",
                 307)
+        }
+        if (url.pathname.match(/\/panel\//gi)) {
+            let PanelRes = await fetch("https://kobe-koto.github.io/Auto-Proxy/"+url.pathname);
+            let status = PanelRes.status;
+            return new Response(PanelRes.body, {status,headers: PanelRes.headers});
+
+            //https://kobe-koto.github.io/Auto-Proxy/panel/index.html
         }
         if (url.pathname === "/panel/check") {
             if (Password === GetQueryString(url, "password")) {

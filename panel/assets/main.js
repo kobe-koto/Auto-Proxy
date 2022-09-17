@@ -11,7 +11,7 @@ async function CheckPassword (Element) {
     }
 
     let Password = Element.previousElementSibling.value;
-    fetch("https://" + "empty-union-b2cc.adminkoto.workers.dev" + "/panel/check?password=" + Password)
+    fetch("https://" + location.host + "/panel/check?password=" + Password)
         .then(r => r.text())
         .catch(()=>{return "CheckFailed"})
         .then(r => {
