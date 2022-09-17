@@ -12,9 +12,12 @@
     <div class="line"></div>
 
     <h2>Password is <a id="PasswordStatus">...</a></h2>
+    <p id="SyncStatus"></p>
     <label>
         <input id="Password" required type="password" placeholder="Please input required your P@$$w0rd here">
-        <button onclick="CheckPassword(this)">Check</button>
+        <br>
+        <button onclick="CheckPassword()">Check</button>
+        <button onclick="SyncConfig()">Sync Config</button>
     </label>
 
     <div class="line"></div>
@@ -50,7 +53,7 @@
         <tr>
             <td>URL Protocol
                 <br/>
-                <span style="font-size: small">設定代理的網址使用的protocol。支持 "http" 和 "https" , 若關閉則尊重原始請求。.</span>
+                <span style="font-size: small">設定代理的網址使用的protocol。若關閉則尊重原始請求。</span>
             </td>
             <td>
                 <label class="switch">

@@ -1,26 +1,83 @@
-async function CheckPassword (Element) {
-    Element.previousElementSibling = Element.previousElementSibling || {};
+window.LocationHost = location.host;
+async function CheckPassword () {
+    let Password = document.getElementById("Password").value,
+        PasswordStatus = document.getElementById("PasswordStatus");
 
-    //location.host = "empty-union-b2cc.adminkoto.workers.dev";
+    PasswordStatus.innerText = "Checking"
 
-    document.getElementById("PasswordStatus").innerText = "Checking"
-
-    if (Element.previousElementSibling.value.length === 0) {
-        document.getElementById("PasswordStatus").innerText = "Can't Be Blank";
+    if (Password.length === 0) {
+        PasswordStatus.innerText = "Can't Be Blank";
         return false;
     }
 
-    let Password = Element.previousElementSibling.value;
-    fetch("https://" + location.host + "/api/check?password=" + Password)
+    fetch("https://" + window.LocationHost + "/api/check?password=" + Password)
         .then(r => r.text())
         .catch(()=>{return "CheckFailed"})
         .then(r => {
             if (r === "true") {
-                document.getElementById("PasswordStatus").innerText = "CORRECT"
+                PasswordStatus.innerText = "CORRECT"
             } else if (r === "CheckFailed") {
-                document.getElementById("PasswordStatus").innerText = "CheckFailed"
+                PasswordStatus.innerText = "(CheckFailed because network issue)"
+            } else if (r === "WrongPassword") {
+                PasswordStatus.innerText = "INCORRECT"
             } else {
-                    document.getElementById("PasswordStatus").innerText = "INCORRECT"
+                PasswordStatus.innerText = "(Something went wrong...)"
+            }
+        })
+}
+async function SyncConfig () {
+    let SyncStatus = document.getElementById("SyncStatus"),
+        Password = document.getElementById("Password").value;
+
+    SyncStatus.innerText = "Checking"
+
+    if (Password === 0) {
+        SyncStatus.innerText = "Can't Be Blank";
+        return false;
+    }
+    fetch("https://" + window.LocationHost + "/api/sync?password=" + Password)
+        .then(r => r.text())
+        .catch(()=>{return "NetworkFailed"})
+        .then(r => {
+            if (r === "NetworkFailed") {
+                SyncStatus.innerText = "Failed because network issue."
+            } else if (r === "WrongPassword") {
+                SyncStatus.innerText = "Password is INCORRECT"
+            } else {
+                try {
+                    let Config = JSON.parse(r);
+
+                    console.log(Config)
+                    window.Config = Config;
+
+                    document.getElementById("ShowAvailableList").checked = Config.ShowAvailableList;
+                    document.getElementById("DisableCache").checked = Config.DisableCache;
+
+                    document.getElementById("HostDomain").value = Config.HostDomain.toArrayString();
+                    document.getElementById("BlockRegion").value = Config.BlockRegion.toArrayString();
+                    document.getElementById("BlockIP").value = Config.BlockIP.toArrayString();
+
+                    document.getElementById("URLProtocol").checked = Config.URLProtocol;
+                    URLProtocolChecked()
+
+                    document.getElementById("AllowList").checked = !!Config.AllowList;
+                    document.getElementById("AllowListTextarea").value = Config.AllowList
+                    document.getElementById("BlockList").checked = !!Config.BlockList;
+                    document.getElementById("BlockListTextarea").value = Config.BlockList;
+                    RadioChanged()
+
+                    document.getElementById("DomainMap").value =
+                        JSON.stringify(Config.DomainMap)
+                            .replace(/"/gi,"")
+                            .replace(/}/gi,"")
+                            .replace(/{/gi,"")
+                            .replace(/:/gi,": ")
+                            .replace(/,/gi,", \r\n")
+                    SyncStatus.innerText = "Successful";
+                } catch (e) {
+                    SyncStatus.innerText = "Sorry, something is going wrong."
+                    console.warn(e);
+                }
             }
         })
 }
@@ -41,9 +98,6 @@ function GetConfig () {
 
     Config.BlockIP =
         document.getElementById("BlockIP").value.toArray();
-
-    Config.ShowAvailableList =
-        document.getElementById("ShowAvailableList").checked;
 
     Config.URLProtocol =
         (function (){
@@ -93,25 +147,25 @@ function GetConfig () {
     return Config;
 
 }
-function RadioChanged (element) {
-    if (element.checked) {
-        document.getElementById(element.id+"Textarea").style.display = "block"
-        if (element.id === "AllowList") {
-            document.getElementById("BlockListTextarea").style.display = "none"
-        } else {
-            document.getElementById("AllowListTextarea").style.display = "none"
-        }
+function RadioChanged () {
+    if (document.getElementById("AllowList").checked) {
+        document.getElementById("AllowListTextarea").style.display = "block"
+        document.getElementById("BlockListTextarea").style.display = "none"
+    } else if (document.getElementById("BlockList").checked) {
+        document.getElementById("AllowListTextarea").style.display = "none"
+        document.getElementById("BlockListTextarea").style.display = "block"
     }
 }
 document.getElementById("PushConfig").onclick = function () {
 
     document.getElementById("PushConfigStatus").innerText = "Try To Push"
 
-    let Config = btoa(GetConfig()); // to base64.
+    let Config = btoa(JSON.stringify(GetConfig()));
     let Password = document.getElementById("Password").value;
+    console.log(Config)
 
     fetch(
-        "https://" + "empty-union-b2cc.adminkoto.workers.dev" +
+        "https://" + window.LocationHost +
         "/api/config?password=" + Password +
         "&b64config=" + Config
     )
@@ -144,11 +198,15 @@ String.prototype.toArray = function(){
         );
     }
 }
+Array.prototype.toArrayString = function(){
+    return (this.toString().replace(/,/gi,", \r\n") || "");
+}
 
-document.getElementById("URLProtocol").onclick = function () {
+function URLProtocolChecked () {
     if (document.getElementById("URLProtocol").checked) {
         document.getElementById("URLProtocolInput").style.display = "block";
     } else {
         document.getElementById("URLProtocolInput").style.display = "none";
     }
 }
+document.getElementById("URLProtocol").onclick = URLProtocolChecked;

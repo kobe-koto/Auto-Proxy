@@ -8,13 +8,13 @@ addEventListener("fetch", event => {
 async function fetchAndApply(request) {
 
     let config = (
-        await AutoProxySpace.get("_config") ||
+        JSON.parse(await AutoProxySpace.get("_config")) ||
         {
             "NotConfig": true,
             "HostDomain": [],
             "DomainMap": {},
-            "BlockRegion": {},
-            "BlockIP": {},
+            "BlockRegion": [],
+            "BlockIP": [],
             "AllowList": [],
             "BlockList": []
         }
@@ -54,7 +54,10 @@ async function fetchAndApply(request) {
 
         if (
             config.NotConfig &&
-            url.pathname.slice(0,6) !== "/panel"
+            (
+                url.pathname.slice(0,6) !== "/panel" &&
+                url.pathname.slice(0,4) !== "/api"
+            )
         ) {
             return Response.redirect(
                 url.protocol +
@@ -67,8 +70,6 @@ async function fetchAndApply(request) {
             let PanelRes = await fetch("https://kobe-koto.github.io/Auto-Proxy/"+url.pathname);
             let status = PanelRes.status;
             return new Response(PanelRes.body, {status,headers: PanelRes.headers});
-
-            //https://kobe-koto.github.io/Auto-Proxy/panel/index.html
         }
         if (url.pathname === "/api/check") {
             if (Password === GetQueryString(url, "password")) {
@@ -80,8 +81,13 @@ async function fetchAndApply(request) {
             if (Password !== GetQueryString(url, "password")) {
                 return new Response("WrongPassword", {headers: UniHeader});
             }
-            AutoProxySpace.put("_config", atob(GetQueryString(url,"b64config")))
+            AutoProxySpace.put("_config", atob(GetQueryString(url,"b64config").replace(/%3D/gi,"=")))
             return new Response("true", {headers: UniHeader});
+        } else if (url.pathname === "/api/sync") {
+            if (Password !== GetQueryString(url, "password")) {
+                return new Response("WrongPassword", {headers: UniHeader});
+            }
+            return new Response(JSON.stringify(config), {headers: UniHeader});
         }
 
 

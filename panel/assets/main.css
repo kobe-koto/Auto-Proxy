@@ -17,7 +17,10 @@ button {
     background: #232323;
     color: #f0f8ff;
     border-style: solid;
-    border-radius: 5px;
+    border-radius: 50px;
+    padding: 15px 30px;
+    font-size: medium;
+    margin: 8px;
 }
 input {
     color: #f0f8ff;
@@ -61,10 +64,8 @@ label[for=URLProtocolInput] {
     display: none;
     float: right;
 }
+
 #PushConfig {
-    border-radius: 50px;
-    padding: 15px 30px;
-    font-size: medium;
     transition: filter 0.2s cubic-bezier(0.68, -0.55, 0.27, 1.55);
 }
 #PushConfig:hover {
