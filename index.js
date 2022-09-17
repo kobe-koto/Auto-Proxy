@@ -7,7 +7,18 @@ addEventListener("fetch", event => {
 
 async function fetchAndApply(request) {
 
-    let config = (await AutoProxySpace.get("_config") || {});
+    let config = (
+        await AutoProxySpace.get("_config") ||
+        {
+            "NotConfig": true,
+            "HostDomain": [],
+            "DomainMap": {},
+            "BlockRegion": {},
+            "BlockIP": {},
+            "AllowList": [],
+            "BlockList": []
+        }
+    );
 
     let i18nData = await GetI18NData (request);
 
@@ -21,7 +32,7 @@ async function fetchAndApply(request) {
         let ProxyDomain = url.host;
 
         //用for從url.host裏面去掉不要的主域名
-        for (let i=0;i<config.HostDomain.length;i++) {
+        for (let i=0;i<(config.HostDomain.length || 0 );i++) {
             ProxyDomain = ProxyDomain.split("."+config.HostDomain[i])[0];
         }
 
@@ -42,11 +53,8 @@ async function fetchAndApply(request) {
     if (ProxyDomain === "" || ProxyDomain === url.host) {
 
         if (
-            config === null &&
-            (
-                url.pathname !== "/panel/check" ||
-                url.pathname !== "/panel/config"
-            )
+            config.NotConfig &&
+            url.pathname.slice(0,6) !== "/panel"
         ) {
             return Response.redirect(
                 url.protocol +
@@ -62,13 +70,13 @@ async function fetchAndApply(request) {
 
             //https://kobe-koto.github.io/Auto-Proxy/panel/index.html
         }
-        if (url.pathname === "/panel/check") {
+        if (url.pathname === "/api/check") {
             if (Password === GetQueryString(url, "password")) {
                 return new Response("true", {headers: UniHeader});
             } else {
                 return new Response("WrongPassword", {headers: UniHeader});
             }
-        } else if (url.pathname === "/panel/config") {
+        } else if (url.pathname === "/api/config") {
             if (Password !== GetQueryString(url, "password")) {
                 return new Response("WrongPassword", {headers: UniHeader});
             }

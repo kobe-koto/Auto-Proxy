@@ -11,7 +11,7 @@ async function CheckPassword (Element) {
     }
 
     let Password = Element.previousElementSibling.value;
-    fetch("https://" + location.host + "/panel/check?password=" + Password)
+    fetch("https://" + location.host + "/api/check?password=" + Password)
         .then(r => r.text())
         .catch(()=>{return "CheckFailed"})
         .then(r => {
@@ -112,7 +112,7 @@ document.getElementById("PushConfig").onclick = function () {
 
     fetch(
         "https://" + "empty-union-b2cc.adminkoto.workers.dev" +
-        "/panel/config?password=" + Password +
+        "/api/config?password=" + Password +
         "&b64config=" + Config
     )
         .then(r => r.text())
