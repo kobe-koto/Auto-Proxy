@@ -1,46 +1,19 @@
 //your password.
 const Password = "LOL"
 
-//在此處設置你的 host domain ，例如是 auto-proxy.example.org 的話可以設置為 auto-proxy.example.org ， auto-proxy.example 以及 auto-proxy 。
-const DomainReplaceKey = ["auto-proxy.example.org","auto-proxy.example","auto-proxy"];
-
-//在此處設定允許的網域和屏蔽的網域。請注意：這兩個列表不能共存，若要取消設定，請將對應的變量設定為 undefined 。
-const AllowList = undefined;
-const BlockList = ["114514.jp","114514.cn"];
-
-//設置屏蔽的國家或地區，示例中的國家和地區代碼"xx"和"xx"目前并不存在于地球這個行星上(必須是小寫，如果你的星球有的話請發issue告訴我一下)，不啓用請設置為false(Boolean值)。
-const BlockRegion = ["xy","xx"];
-
-//設置屏蔽的IP位址，不啓用請設置為false(Boolean值)。
-const BlockIP = ["192.168.254.78","192.168.254.87"];
-
-//是否在請求被block的時候展示 可用/阻止 域名，Boolean類型，允許true和false。
-const ShowAvailableList = true;
-
-//設定代理的網址使用的protocol。支持 "http" 和 "https" , 若設爲 false 則尊重原始請求。
-const URLProtocol = false;
-
-//選擇是否强制禁用緩存（需要瀏覽器支援），允許true和false （Boolean 值）。
-const DisableCache = true;
-
-//域名映射表。例如" 'github': 'github.com' " = github.example.org => github.com 。
-const DomainMap = {
-    "github": "github.com"
-}
-
 addEventListener("fetch", event => {
     event.respondWith(fetchAndApply(event.request));
 })
 
 async function fetchAndApply(request) {
-    // fetch the i18n data from GitHub, save to KV.
+
+    let config = await AutoProxySpace.get("_config");
 
     let i18nData = await GetI18NData (request);
 
     let url = new URL(request.url);
-
-    if (!!URLProtocol) {
-        url.protocol = URLProtocol+":";
+    if (!!config.URLProtocol) {
+        url.protocol = (config.URLProtocol || "https") + ":";
     }
 
     //定義要proxy的位址。
@@ -48,8 +21,8 @@ async function fetchAndApply(request) {
         let ProxyDomain = url.host;
 
         //用for從url.host裏面去掉不要的主域名
-        for (let i=0;i<DomainReplaceKey.length;i++) {
-            ProxyDomain = ProxyDomain.split("."+DomainReplaceKey[i])[0];
+        for (let i=0;i<config.HostDomain.length;i++) {
+            ProxyDomain = ProxyDomain.split("."+config.HostDomain[i])[0];
         }
 
         //替換 "-x-" 為 "." , "-p-" 為 ":" .
@@ -59,7 +32,7 @@ async function fetchAndApply(request) {
                 .replace(/-p-/gi,":");
 
         //ProxyDomain的值在DomainMap裏面時，替換ProxyDomain的值為DomainMap裏面存儲的值。
-        ProxyDomain = DomainMap[ProxyDomain] || ProxyDomain;
+        ProxyDomain = config.DomainMap[ProxyDomain] || ProxyDomain;
 
         return ProxyDomain;
     })()
@@ -68,17 +41,12 @@ async function fetchAndApply(request) {
 
     if (ProxyDomain === "" || ProxyDomain === url.host) {
 
-        function GetQueryString(name) {
-            let reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)", "i");
-            let r = url.search.substr(1).match(reg);
-
-            if (r != null) {return r[2];} else {return null;}
-        }
-
-        let config = await AutoProxySpace.get("_config");
         if (
             config === null &&
-            url.pathname === "/"
+            (
+                url.pathname !== "/panel/check" ||
+                url.pathname !== "/panel/config"
+            )
         ) {
             return Response.redirect(
                 url.protocol +
@@ -88,10 +56,17 @@ async function fetchAndApply(request) {
                 307)
         }
         if (url.pathname === "/panel/check") {
-            if (Password === GetQueryString("password")) {
-                return new Response("true",
-                    {headers: UniHeader});
+            if (Password === GetQueryString(url, "password")) {
+                return new Response("true", {headers: UniHeader});
+            } else {
+                return new Response("WrongPassword", {headers: UniHeader});
             }
+        } else if (url.pathname === "/panel/config") {
+            if (Password !== GetQueryString(url, "password")) {
+                return new Response("WrongPassword", {headers: UniHeader});
+            }
+            AutoProxySpace.put("_config", atob(GetQueryString(url,"b64config")))
+            return new Response("true", {headers: UniHeader});
         }
 
 
@@ -114,7 +89,7 @@ async function fetchAndApply(request) {
         );
     }
 
-    isBlock(request,ProxyDomain);
+    isBlock(config,i18nData,request,ProxyDomain);
 
     //isBlock的過了的話就開始請求要訪問的位址了。
     let NewRequestHeaders = new Headers(request.headers);
@@ -136,7 +111,7 @@ async function fetchAndApply(request) {
     const status = OriginalResponse.status;
 
     //如果用戶配置了强制禁用緩存則設置Cache-Control標頭為no-store。
-    if (DisableCache) {
+    if (config.DisableCache) {
         NewResponseHeaders.set("cache-control", "no-store");
     }
 
@@ -186,9 +161,9 @@ const UniHeader = {
     "Cache-Control": "no-store"
 };
 
-function isBlock (request,ProxyDomain) {
+function isBlock (config,i18nData,request,ProxyDomain) {
     //檢查用戶是不是在BlockRegion發起的請求。是則返回對應的403頁面。
-    if (request.headers.get("CF-IPCountry") !== null && !!BlockRegion && BlockRegion.includes(request.headers.get("CF-IPCountry"))) {
+    if (request.headers.get("CF-IPCountry") !== null && !!config.BlockRegion && config.BlockRegion.includes(request.headers.get("CF-IPCountry"))) {
         return new Response(
             i18nData.DomainBlocked +
             i18nData.Deploy +
@@ -198,7 +173,7 @@ function isBlock (request,ProxyDomain) {
     }
 
     //檢查用戶的IP是否在BlockIP内。是則返回對應的403頁面。
-    if (request.headers.get("cf-connecting-ip") !== null && !!BlockIP && BlockIP.includes(request.headers.get("cf-connecting-ip"))) {
+    if (request.headers.get("cf-connecting-ip") !== null && !!config.BlockIP && config.BlockIP.includes(request.headers.get("cf-connecting-ip"))) {
         return new Response(
             i18nData.IPBlocked +
             i18nData.Deploy +
@@ -208,13 +183,13 @@ function isBlock (request,ProxyDomain) {
     }
 
     //檢查用戶請求的ProxyDomain是否在BlockList内或AllowList外，是則返回403頁面。
-    if (BlockList !== undefined && AllowList === undefined && BlockList.includes(ProxyDomain)) {
+    if (config.BlockList !== undefined && config.AllowList === undefined && config.BlockList.includes(ProxyDomain)) {
 
         let BlockListText = (function (){
-            if (ShowAvailableList) {
+            if (config.ShowAvailableList) {
                 let ReturnValue = i18nData.BlockList;
-                for (let b in BlockList) {
-                    ReturnValue += " " + BlockList[b] + "\r\n";
+                for (let b in config.BlockList) {
+                    ReturnValue += " " + config.BlockList[b] + "\r\n";
                 }
                 return ReturnValue;
             } else {
@@ -230,13 +205,13 @@ function isBlock (request,ProxyDomain) {
             { headers: UniHeader, status:403 }
         );
 
-    } else if (BlockList === undefined && AllowList !== undefined && !AllowList.includes(ProxyDomain)) {
+    } else if (config.BlockList === undefined && config.AllowList !== undefined && !config.AllowList.includes(ProxyDomain)) {
 
         let AllowListText = (function (){
-            if (ShowAvailableList) {
+            if (config.ShowAvailableList) {
                 let ReturnValue = i18nData.AllowList;
-                for (let b in AllowList) {
-                    ReturnValue += " " + AllowList[b] + "\r\n";
+                for (let b in config.AllowList) {
+                    ReturnValue += " " + config.AllowList[b] + "\r\n";
                 }
                 return ReturnValue;
             } else {
@@ -252,7 +227,7 @@ function isBlock (request,ProxyDomain) {
             { headers: UniHeader, status:403 }
         );
 
-    } else if ((BlockList !== undefined) && (AllowList !== undefined)){
+    } else if ((config.BlockList !== undefined) && (config.AllowList !== undefined)){
         //（靠北哦怎麽會有人這樣子搞的）
         return new Response(i18nData.ConfError + (i18nData.LangNotFindMsg || ""),{
             headers: UniHeader
@@ -303,4 +278,11 @@ async function GetI18NData (request) {
     } else {
         return JSON.parse(LangData);
     }
+}
+
+function GetQueryString(url, name) {
+    let reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)", "i");
+    let r = url.search.substr(1).match(reg);
+
+    if (r != null) {return r[2];} else {return null;}
 }

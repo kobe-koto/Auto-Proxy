@@ -4,16 +4,16 @@
     <meta charset="UTF-8">
     <title>Config Your Auto-Proxy.</title>
     <link rel="stylesheet" href="./assets/main.css">
-    <script src="./assets/main.js"></script>
+    <script async src="./assets/main.js"></script>
 </head>
 <body>
     <h1>Config your Auto-Proxy.</h1>
 
     <div class="line"></div>
 
-    <h2>Password is <a id="PasswordStatus">REQUIRED</a>.</h2>
+    <h2>Password is <a id="PasswordStatus">...</a></h2>
     <label>
-        <input type="password" placeholder="Please input your P@$$w0rd here">
+        <input id="Password" required type="password" placeholder="Please input required your P@$$w0rd here">
         <button onclick="CheckPassword(this)">Check</button>
     </label>
 
@@ -41,8 +41,24 @@
             </td>
             <td>
                 <label class="switch">
-                    <input type="checkbox" id="Disable Cache">
+                    <input type="checkbox" id="DisableCache">
                     <span class="slider round"></span>
+                </label>
+            </td>
+        </tr>
+
+        <tr>
+            <td>URL Protocol
+                <br/>
+                <span style="font-size: small">設定代理的網址使用的protocol。支持 "http" 和 "https" , 若關閉則尊重原始請求。.</span>
+            </td>
+            <td>
+                <label class="switch">
+                    <input type="checkbox" id="URLProtocol">
+                    <span class="slider round"></span>
+                </label>
+                <label for="URLProtocolInput">
+                    <input required id="URLProtocolInput" placeholder="Protocol without ' : ' ">
                 </label>
             </td>
         </tr>
@@ -56,6 +72,7 @@
     <label>
         <!--請在此輸入您的HostDomain, 以英文逗號(" , ")分割. 換行符和空格將會被忽略.-->
         <textarea
+                required
                 id="HostDomain"
                 placeholder="
                 Please enter your HostDomain here, separated by commas (' , '). Newlines and spaces will be ignored.
@@ -73,6 +90,7 @@
     <label>
         <!--請在此輸入您的HostDomain, 以英文逗號(" , ")分割. 換行符和空格將會被忽略.-->
         <textarea
+                required
                 id="BlockRegion"
                 placeholder="
                 Please enter Blocked Region Code here, separated by commas (' , '). Newlines and spaces will be ignored.
@@ -90,6 +108,7 @@
     <label>
         <!--請在此輸入您的HostDomain, 以英文逗號(" , ")分割. 換行符和空格將會被忽略.-->
         <textarea
+                required
                 id="BlockIP"
                 placeholder="
                 Please enter Blocked IP Address here, separated by commas (' , '). Newlines and spaces will be ignored.
@@ -102,11 +121,29 @@
 
     <div class="line"></div>
 
+    <h2>Domain Maps</h2>
+
+    <label>
+        <!--域名映射表。例如" 'github': 'github.com' " = github.example.org => github.com 。以英文逗號(" , ")分割. 換行符和空格將會被忽略.-->
+        <textarea
+                required
+                id="DomainMap"
+                placeholder="
+                Please enter Domain Maps here, separated by commas (' , '). Newlines and spaces will be ignored.
+                Example:
+
+                  github: github.com,
+                  github-api: api.github.com"
+        ></textarea>
+    </label>
+
+    <div class="line"></div>
+
     <fieldset>
         <h2>Allow or Block</h2>
 
         <div>
-            <input type="radio" name="chooses" id="AllowList" onclick="RadioChanged(this)" />
+            <input required type="radio" name="chooses" id="AllowList" onclick="RadioChanged(this)" />
             <label for="AllowList">AllowList</label>
 
             <label for="AllowListTextarea"></label>
@@ -124,7 +161,7 @@
         </div>
 
         <div>
-            <input type="radio" name="chooses" id="BlockList" onclick="RadioChanged(this)" checked />
+            <input required type="radio" name="chooses" id="BlockList" onclick="RadioChanged(this)" checked />
             <label for="BlockList">BlockList</label>
 
             <label for="BlockListTextarea"></label>
@@ -141,6 +178,9 @@
         </div>
 
     </fieldset>
+
+    <button id="PushConfig">Fire!</button>
+    <p id="PushConfigStatus"></p>
 
 
 </body>
