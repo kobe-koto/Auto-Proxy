@@ -8,19 +8,69 @@ body {
     text-align: center;
     background-color: #000000;
     color: #f0f8ff;
+    margin: 0;
 }
 body * {
     font-family: system-ui, sans-serif;
 }
+
+.warn {
+    background-color: #8b0000;
+    padding: 15px;
+
+    border-bottom-color: #000000;
+    border-bottom-width: 2px;
+    border-bottom-style: solid;
+}
+.warn p {
+    margin: 0;
+    padding: 0;
+}
+
+label[for=URLProtocolInput] {
+    display: block;
+}
+#URLProtocolInput {
+    display: none;
+    float: right;
+}
+
+#PushConfig {
+    transition: filter 0.2s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+}
+#PushConfig:hover {
+    filter: brightness(0.6);
+}
+#PushConfig:active {
+    transform: scale(0.93);
+}
+
+.line {
+    width: 85%;
+    height: 1px;
+    text-align: center;
+    margin: 1.25rem auto;
+    background-color: #a1a1a1;
+}
+
 button {
     border-width: 2px;
-    background: #232323;
+    background-color: #232323;
     color: #f0f8ff;
     border-style: solid;
     border-radius: 50px;
     padding: 15px 30px;
     font-size: medium;
     margin: 8px;
+    transition: .3s;
+}
+button:hover {
+    box-shadow: 0 0 10px #606060;
+}
+
+table {
+    width: 85%;
+    margin: auto;
 }
 input {
     color: #f0f8ff;
@@ -42,43 +92,14 @@ textarea {
     border-radius: 15px;
     margin: auto;
 }
-.line {
-    width: 85%;
-    height: 1px;
-    text-align: center;
-    margin: 1.25rem auto;
-    background-color: #a1a1a1;
-}
-body fieldset div input {
-    width: unset;
-}
+
 fieldset {
     border: none;
     margin: 0;
     padding: 0;
 }
-label[for=URLProtocolInput] {
-    display: block;
-}
-#URLProtocolInput {
-    display: none;
-    float: right;
-}
-
-#PushConfig {
-    transition: filter 0.2s cubic-bezier(0.68, -0.55, 0.27, 1.55);
-}
-#PushConfig:hover {
-    filter: brightness(0.6);
-}
-#PushConfig:active {
-    transform: scale(0.93);
-}
-
-
-table {
-    width: 85%;
-    margin: auto;
+fieldset div input {
+    width: unset;
 }
 table tbody tr td:nth-child(1) {
     text-align: left;
@@ -86,6 +107,68 @@ table tbody tr td:nth-child(1) {
 table tbody tr td:nth-child(2) {
     text-align: right;
 }
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 35px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #232323;
+    -webkit-transition: .4s;
+    transition: .4s;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 26px;
+    width: 26px;
+    left: 4px;
+    bottom: 4px;
+    background-color: #606060;
+    -webkit-transition: .4s;
+    transition: .4s;
+}
+
+input:checked + .slider {
+    background-color: #2196F3;
+}
+
+input:checked + .slider:before {
+    background-color: #ffffff;
+}
+
+input:focus + .slider {
+    box-shadow: 0 0 10px #2196F3;
+}
+
+input:checked + .slider:before {
+    transform: translateX(26px);
+}
+
+.slider.round {
+    border-radius: 35px;
+}
+
+.slider.round:before {
+    border-radius: 50%;
+}
+
 ::-webkit-scrollbar-thumb {
     border-radius: 10px;
     background-color: #606060;
@@ -117,61 +200,4 @@ table tbody tr td:nth-child(2) {
     border-width: 3px;
     box-sizing: border-box;
     border-color: #232323;
-}
-.switch {
-    position: relative;
-    display: inline-block;
-    width: 60px;
-    height: 34px;
-}
-
-.switch input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-}
-
-.slider {
-    position: absolute;
-    cursor: pointer;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: #ccc;
-    -webkit-transition: .4s;
-    transition: .4s;
-}
-
-.slider:before {
-    position: absolute;
-    content: "";
-    height: 26px;
-    width: 26px;
-    left: 4px;
-    bottom: 4px;
-    background-color: white;
-    -webkit-transition: .4s;
-    transition: .4s;
-}
-
-input:checked + .slider {
-    background-color: #2196F3;
-}
-
-input:focus + .slider {
-    box-shadow: 0 0 1px #2196F3;
-}
-
-input:checked + .slider:before {
-    transform: translateX(26px);
-}
-
-/* Rounded sliders */
-.slider.round {
-    border-radius: 34px;
-}
-
-.slider.round:before {
-    border-radius: 50%;
 }

@@ -7,6 +7,19 @@
     <script async src="./assets/main.js"></script>
 </head>
 <body>
+
+    <span id="FileProtocolWarn" style="display: none;">
+        <div class="warn">
+            <p>!!!&nbsp;&nbsp;Don't open panel with "file:///" protocol&nbsp;&nbsp;!!!</p>
+        </div>
+    </span>
+
+    <noscript>
+        <div class="warn">
+            <p>!!!&nbsp;&nbsp;Don't open panel without JavaScript&nbsp;&nbsp;!!!</p>
+        </div>
+    </noscript>
+
     <h1>Config your Auto-Proxy.</h1>
 
     <div class="line"></div>
@@ -182,7 +195,7 @@
 
     </fieldset>
 
-    <button id="PushConfig">Fire!</button>
+    <button onclick="PushConfig()" id="PushConfig">Fire!</button>
     <p id="PushConfigStatus"></p>
 
 

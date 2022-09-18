@@ -1,14 +1,18 @@
 window.LocationHost = location.host;
+if (window.location.protocol === "file:") {
+    document.getElementById("FileProtocolWarn").style.display = "block";
+}
+
 async function CheckPassword () {
     let Password = document.getElementById("Password").value,
         PasswordStatus = document.getElementById("PasswordStatus");
-
-    PasswordStatus.innerText = "Checking"
 
     if (Password.length === 0) {
         PasswordStatus.innerText = "Can't Be Blank";
         return false;
     }
+
+    PasswordStatus.innerText = "Checking"
 
     fetch("https://" + window.LocationHost + "/api/check?password=" + Password)
         .then(r => r.text())
@@ -29,6 +33,11 @@ async function SyncConfig () {
     let SyncStatus = document.getElementById("SyncStatus"),
         Password = document.getElementById("Password").value;
 
+    if (Password.length === 0) {
+        PasswordStatus.innerText = "Can't Be Blank";
+        return false;
+    }
+
     SyncStatus.innerText = "Checking"
 
     if (Password === 0) {
@@ -46,9 +55,6 @@ async function SyncConfig () {
             } else {
                 try {
                     let Config = JSON.parse(r);
-
-                    console.log(Config)
-                    window.Config = Config;
 
                     document.getElementById("ShowAvailableList").checked = Config.ShowAvailableList;
                     document.getElementById("DisableCache").checked = Config.DisableCache;
@@ -73,31 +79,56 @@ async function SyncConfig () {
                             .replace(/{/gi,"")
                             .replace(/:/gi,": ")
                             .replace(/,/gi,", \r\n")
+
                     SyncStatus.innerText = "Successful";
                 } catch (e) {
                     SyncStatus.innerText = "Sorry, something is going wrong."
-                    console.warn(e);
                 }
             }
         })
 }
-function GetConfig () {
+
+function PushConfig () {
+    let PushConfigStatus = document.getElementById("PushConfigStatus"),
+        Password = document.getElementById("Password").value,
+        Config = btoa(JSON.stringify(GenConfig()));
+
+    if (Password.length === 0) {
+        PasswordStatus.innerText = "Can't Be Blank";
+        return false;
+    }
+
+    PushConfigStatus.innerText = "Try to push..."
+
+    fetch(
+        "https://" + window.LocationHost +
+        "/api/config?password=" + Password +
+        "&b64config=" + Config
+    )
+        .then(r => r.text())
+        .catch(()=>{return "NetworkFailed"})
+        .then(r => {
+            if (r === "true") {
+                PushConfigStatus.innerText = "Successful"
+            } else if (r === "WrongPassword") {
+                PushConfigStatus.innerText = "Password is incorrect"
+            } else if (r === "NetworkFailed") {
+                PushConfigStatus.innerText = "Failed because network issue."
+            } else {
+                PushConfigStatus.innerText = "Sorry, something is going wrong."
+            }
+        })
+}
+
+function GenConfig () {
     let Config = {};
 
-    Config.HostDomain =
-        document.getElementById("HostDomain").value.toArray();
+    Config.HostDomain = document.getElementById("HostDomain").value.toArray();
+    Config.BlockRegion = document.getElementById("BlockRegion").value.toArray();
+    Config.BlockIP = document.getElementById("BlockIP").value.toArray();
 
-    Config.BlockRegion =
-        document.getElementById("BlockRegion").value.toArray();
-
-    Config.ShowAvailableList =
-        document.getElementById("ShowAvailableList").checked;
-
-    Config.DisableCache =
-        document.getElementById("DisableCache").checked;
-
-    Config.BlockIP =
-        document.getElementById("BlockIP").value.toArray();
+    Config.ShowAvailableList = document.getElementById("ShowAvailableList").checked;
+    Config.DisableCache = document.getElementById("DisableCache").checked;
 
     Config.URLProtocol =
         (function (){
@@ -147,6 +178,7 @@ function GetConfig () {
     return Config;
 
 }
+
 function RadioChanged () {
     if (document.getElementById("AllowList").checked) {
         document.getElementById("AllowListTextarea").style.display = "block"
@@ -155,51 +187,6 @@ function RadioChanged () {
         document.getElementById("AllowListTextarea").style.display = "none"
         document.getElementById("BlockListTextarea").style.display = "block"
     }
-}
-document.getElementById("PushConfig").onclick = function () {
-
-    document.getElementById("PushConfigStatus").innerText = "Try To Push"
-
-    let Config = btoa(JSON.stringify(GetConfig()));
-    let Password = document.getElementById("Password").value;
-    console.log(Config)
-
-    fetch(
-        "https://" + window.LocationHost +
-        "/api/config?password=" + Password +
-        "&b64config=" + Config
-    )
-        .then(r => r.text())
-        .catch(()=>{return "NetworkFailed"})
-        .then(r => {
-            if (r === "true") {
-                document.getElementById("PushConfigStatus").innerText = "Successful"
-            } else if (r === "WrongPassword") {
-                document.getElementById("PushConfigStatus").innerText = "Password is INCORRECT"
-            } else if (r === "NetworkFailed") {
-                document.getElementById("PushConfigStatus").innerText = "Failed because network issue."
-            } else {
-                document.getElementById("PushConfigStatus").innerText = "Sorry, something is going wrong."
-            }
-        })
-
-}
-
-String.prototype.toArray = function(){
-    if (this.length === 0) {
-        return false
-    } else {
-        return (
-            this
-                .replace(/\r/gi, "")
-                .replace(/\n/gi, "")
-                .replace(/ /gi, "")
-                .split(",")
-        );
-    }
-}
-Array.prototype.toArrayString = function(){
-    return (this.toString().replace(/,/gi,", \r\n") || "");
 }
 
 function URLProtocolChecked () {
@@ -210,3 +197,31 @@ function URLProtocolChecked () {
     }
 }
 document.getElementById("URLProtocol").onclick = URLProtocolChecked;
+
+
+String.prototype.toArray = function(){
+    if (this.length === 0) {
+        return []
+    } else {
+        return (
+            this
+                .replace(/\r/gi, "")
+                .replace(/\n/gi, "")
+                .replace(/ /gi, "")
+                .split(",")
+        );
+    }
+}
+
+Array.prototype.toArrayString = function(){
+    return (this.toString().replace(/,/gi,", \r\n") || "");
+}
+
+
+
+
+
+
+
+
+

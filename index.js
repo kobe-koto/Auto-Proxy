@@ -66,11 +66,13 @@ async function fetchAndApply(request) {
                 "/panel/",
                 307)
         }
+
         if (url.pathname.match(/\/panel\//gi)) {
             let PanelRes = await fetch("https://kobe-koto.github.io/Auto-Proxy/"+url.pathname);
             let status = PanelRes.status;
             return new Response(PanelRes.body, {status,headers: PanelRes.headers});
         }
+
         if (url.pathname === "/api/check") {
             if (Password === GetQueryString(url, "password")) {
                 return new Response("true", {headers: UniHeader});
