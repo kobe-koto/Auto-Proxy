@@ -175,7 +175,7 @@ async function fetchAndApply(request) {
 AutoProxySpace = AutoProxySpace || {};
 
 //定義要從何處獲取i18n資料.
-let GetI18NDataAPI = "https://github.com/kobe-koto/Auto-Proxy/raw/auto-proxy-with-KV/i18n/";
+let GetI18NDataAPI = "https://github.com/kobe-koto/Auto-Proxy/raw/main/i18n/";
 
 //定義UniHeader。。。你一般不需要操心這個東西。
 const UniHeader = {
