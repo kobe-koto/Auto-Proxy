@@ -199,7 +199,7 @@ async function fetchAndApply(request) {
         ) {
             ReplacedText = await OriginalResponse.text()
             let ReplacerOriginalDomain = new RegExp(url.host,"gi");
-            ReplacedText = ReplacedText.replace(ReplacerOriginalDomain, ProxyDomain);
+            ReplacedText = ReplacedText.replace(ProxyDomain, ReplacerOriginalDomain);
         } else {
             ReplacedText = OriginalResponse.body
         }
