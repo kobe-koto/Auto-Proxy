@@ -22,34 +22,46 @@
 
 ### 請注意: 要部署該 Workers 服務, 您爲其必須綁定您自己的域名. 因爲:  1. Workers子域遭污染; 2. Workers 不支持匹配點部署到多個服務子域的子域上.
 
+### TLDR版
+
+1. 部署 index.js 到 Cloudflare Workers.
+
+2. 綁定一個 KV 到這個 Workers 上, 變量名爲 `AutoProxySpace` .
+
+3. 添加打開橙色雲的通配符 DNS 記錄和路由.
+
+4. 訪問自訂子域, 您將被重新導向到 Panel 頁面來配置 Auto-Proxy.
+
+### 稍微長一點 版
+
 1. 登錄您的 CF Dashboard.
 
 2. 轉到右側的 "Workers" 選項卡.
 
 3. 點擊 "建立服務" 按鈕.
 
-4. 服務名稱自行決定，例如 bypass-firewall (您應該在 *第 5 步* 將代碼中 DomainReplaceKey 變量的值為 ["bypass-firewall"] ).
+4. 服務名稱自行決定，例如 bypass-firewall.
 
 5. 編輯 Workers 中的代碼為 index.js 中的代碼.
 
-6. Workers 的子域最近遭到污染, 所以您需要爲其分配子域.
+6. 綁定一個 KV 到這個 Workers 上, 變量名爲 `AutoProxySpace` .
 
-7. 記錄下您的 Workers 子域, 轉到 DNS 設定処, 將其添加為您的子域名的真實名稱記錄. 例如您的域名是 example.org, Workers 子域為 bypass-firewall.example.workers.dev , 要添加的子域為 bypass.example.org, 那麽您應該如下設定記錄: 
+7. Workers 的子域最近遭到污染, 所以您需要爲其分配子域.
+
+8. 記錄下您的 Workers 子域, 轉到 DNS 設定処, 將其添加為您的子域名的真實名稱記錄. 例如您的域名是 example.org, Workers 子域為 bypass-firewall.example.workers.dev , 要添加的子域為 bypass.example.org, 那麽您應該如下設定記錄: 
 
    | 名稱                 | 記錄類型 | 啓用 CF CDN | 記錄值                              |
    | -------------------- | -------- | ----------- | ----------------------------------- |
    | bypass.example.org   | CNAME    | √           | bypass-firewall.example.workers.dev |
    | *.bypass.example.org | CNAME    | √           | bypass-firewall.example.workers.dev |
 
-8. 在您的 Workers 的管理頁面的 "觸發程序" 選項卡中的 "路由" 処添加兩條記錄: 
+9. 在您的 Workers 的管理頁面的 "觸發程序" 選項卡中的 "路由" 処添加兩條記錄: 
 
    ```
    bypass.example.org/*
    *bypass.example.org/*
    ```
 
-9. 然後在您的 Workers 中的代碼修改 DomainReplaceKey 變量的值為 `["bypass-firewall","bypass"]` .
-
-10. 訪問您的自訂子域看看!
+10. 訪問您的自訂子域, 您將被重新導向到 Panel 頁面來配置 Auto-Proxy.
 
 ## 給個 STAR 吧秋梨膏! 
