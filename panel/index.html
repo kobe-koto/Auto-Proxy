@@ -8,11 +8,11 @@
 </head>
 <body>
 
-    <span id="FileProtocolWarn" style="display: none;">
+    <div id="FileProtocolWarn" style="display: none;">
         <div class="warn">
             <p>!!!&nbsp;&nbsp;Don't open panel with "file:///" protocol&nbsp;&nbsp;!!!</p>
         </div>
-    </span>
+    </div>
 
     <noscript>
         <div class="warn">
@@ -35,167 +35,205 @@
 
     <div class="line"></div>
 
-    <table><tbody>
-
-        <tr>
-            <td>Show Available List
-                <br/>
-                <span style="font-size: small">是否在請求的域名被block的時候展示 可用/阻止 域名.</span>
-            </td>
-            <td>
-                <label class="switch">
-                    <input type="checkbox" id="ShowAvailableList">
-                    <span class="slider round"></span>
-                </label>
-            </td>
-        </tr>
-
-        <tr>
-            <td>Disable Cache
-                <br/>
-                <span style="font-size: small">選擇是否强制禁用緩存（需要瀏覽器支援）.</span>
-            </td>
-            <td>
-                <label class="switch">
-                    <input type="checkbox" id="DisableCache">
-                    <span class="slider round"></span>
-                </label>
-            </td>
-        </tr>
-
-        <tr>
-            <td>URL Protocol
-                <br/>
-                <span style="font-size: small">設定代理的網址使用的protocol。若關閉則尊重原始請求。</span>
-            </td>
-            <td>
-                <label class="switch">
-                    <input type="checkbox" id="URLProtocol">
-                    <span class="slider round"></span>
-                </label>
-                <label for="URLProtocolInput">
-                    <input required id="URLProtocolInput" placeholder="Protocol without ' : ' ">
-                </label>
-            </td>
-        </tr>
-
-    </tbody></table>
-
-    <div class="line"></div>
-
-    <h2>Your Host Domain</h2>
-
-    <label>
-        <!--請在此輸入您的HostDomain, 以英文逗號(" , ")分割. 換行符和空格將會被忽略.-->
-        <textarea
-                required
-                id="HostDomain"
-                placeholder="
-                Please enter your HostDomain here, separated by commas (' , '). Newlines and spaces will be ignored.
-                Example:
-
-                  foo.example.workers.dev,
-                  foo.example.org"
-        ></textarea>
-    </label>
-
-    <div class="line"></div>
-
-    <h2>Blocked Region</h2>
-
-    <label>
-        <!--請在此輸入您的HostDomain, 以英文逗號(" , ")分割. 換行符和空格將會被忽略.-->
-        <textarea
-                required
-                id="BlockRegion"
-                placeholder="
-                Please enter Blocked Region Code here, separated by commas (' , '). Newlines and spaces will be ignored.
-                Example:
-
-                  xy,
-                  xx"
-        ></textarea>
-    </label>
-
-    <div class="line"></div>
-
-    <h2>Blocked IP Address</h2>
-
-    <label>
-        <!--請在此輸入您的HostDomain, 以英文逗號(" , ")分割. 換行符和空格將會被忽略.-->
-        <textarea
-                required
-                id="BlockIP"
-                placeholder="
-                Please enter Blocked IP Address here, separated by commas (' , '). Newlines and spaces will be ignored.
-                Example:
-
-                  192.168.254.78,
-                  192.168.254.87"
-        ></textarea>
-    </label>
-
-    <div class="line"></div>
-
-    <h2>Domain Maps</h2>
-
-    <label>
-        <!--域名映射表。例如" 'github': 'github.com' " = github.example.org => github.com 。以英文逗號(" , ")分割. 換行符和空格將會被忽略.-->
-        <textarea
-                required
-                id="DomainMap"
-                placeholder="
-                Please enter Domain Maps here, separated by commas (' , '). Newlines and spaces will be ignored.
-                Example:
-
-                  github: github.com,
-                  github-api: api.github.com"
-        ></textarea>
-    </label>
-
-    <div class="line"></div>
-
     <fieldset>
-        <h2>Allow or Block</h2>
+        <h2>Migrate from Auto-Proxy-with-KV or Config</h2>
 
         <div>
-            <input required type="radio" name="chooses" id="AllowList" onclick="RadioChanged(this)" />
-            <label for="AllowList">AllowList</label>
+            <input required type="radio" name="MigrateOrConfigChooses" id="Migrate" onclick="MigrateOrConfigRadioChanged()" />
+            <label for="Migrate">Migrate from Auto-Proxy-without-KV</label>
 
-            <label for="AllowListTextarea"></label>
-            <textarea
-                    name=""
-                    id="AllowListTextarea"
-                    style="display: none;margin: 15px auto;"
-                    placeholder="
+            <br/>
+            <div id="MigrateDiv" style="display: none;" onclick="MigrateOrConfigRadioChanged()">
+                <p id="MigrateStatus"></p>
+                <label for="MigrateTextarea"></label>
+                <textarea
+                        name=""
+                        id="MigrateTextarea"
+                        style="margin: 15px auto;"
+                        placeholder="
                 Please enter Allowed Domain Address here, separated by commas (' , '). Newlines and spaces will be ignored.
                 Example:
 
                   114514.jp,
                   114514.cn"
-            ></textarea>
+                ></textarea>
+                <button onclick="ParseOldConfig(document.getElementById('MigrateTextarea').value)">Migrate Now!</button>
+            </div>
         </div>
 
         <div>
-            <input required type="radio" name="chooses" id="BlockList" onclick="RadioChanged(this)" checked />
-            <label for="BlockList">BlockList</label>
+            <input required type="radio" name="MigrateOrConfigChooses" id="Config" onclick="MigrateOrConfigRadioChanged()" checked />
+            <label for="Config">Config Yourself</label>
 
-            <label for="BlockListTextarea"></label>
-            <textarea
-                    name=""
-                    id="BlockListTextarea"
-                    style="display: block;margin: 15px auto;"
-                    placeholder="
+            <br/>
+            <div id="ConfigDiv">
+                <table><tbody>
+
+                <tr>
+                    <td>Show Available List
+                        <br/>
+                        <span style="font-size: small">是否在請求的域名被block的時候展示 可用/阻止 域名.</span>
+                    </td>
+                    <td>
+                        <label class="switch">
+                            <input type="checkbox" id="ShowAvailableList">
+                            <span class="slider round"></span>
+                        </label>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>Disable Cache
+                        <br/>
+                        <span style="font-size: small">選擇是否强制禁用緩存（需要瀏覽器支援）.</span>
+                    </td>
+                    <td>
+                        <label class="switch">
+                            <input type="checkbox" id="DisableCache">
+                            <span class="slider round"></span>
+                        </label>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>URL Protocol
+                        <br/>
+                        <span style="font-size: small">設定代理的網址使用的protocol。若關閉則尊重原始請求。</span>
+                    </td>
+                    <td>
+                        <label class="switch">
+                            <input type="checkbox" id="URLProtocol">
+                            <span class="slider round"></span>
+                        </label>
+                        <label for="URLProtocolInput">
+                            <input required id="URLProtocolInput" placeholder="Protocol without ' : ' ">
+                        </label>
+                    </td>
+                </tr>
+
+                </tbody></table>
+
+                <div class="line"></div>
+
+                <h2>Your Host Domain</h2>
+
+                <label>
+                    <!--請在此輸入您的HostDomain, 以英文逗號(" , ")分割. 換行符和空格將會被忽略.-->
+                    <textarea
+                            required
+                            id="HostDomain"
+                            placeholder="
+                Please enter your HostDomain here, separated by commas (' , '). Newlines and spaces will be ignored.
+                Example:
+
+                  foo.example.workers.dev,
+                  foo.example.org"
+                    ></textarea>
+                </label>
+
+                <div class="line"></div>
+
+                <h2>Blocked Region</h2>
+
+                <label>
+                    <!--請在此輸入您的HostDomain, 以英文逗號(" , ")分割. 換行符和空格將會被忽略.-->
+                    <textarea
+                            required
+                            id="BlockRegion"
+                            placeholder="
+                Please enter Blocked Region Code here, separated by commas (' , '). Newlines and spaces will be ignored.
+                Example:
+
+                  xy,
+                  xx"
+                    ></textarea>
+                </label>
+
+                <div class="line"></div>
+
+                <h2>Blocked IP Address</h2>
+
+                <label>
+                    <!--請在此輸入您的HostDomain, 以英文逗號(" , ")分割. 換行符和空格將會被忽略.-->
+                    <textarea
+                            required
+                            id="BlockIP"
+                            placeholder="
+                Please enter Blocked IP Address here, separated by commas (' , '). Newlines and spaces will be ignored.
+                Example:
+
+                  192.168.254.78,
+                  192.168.254.87"
+                    ></textarea>
+                </label>
+
+                <div class="line"></div>
+
+                <h2>Domain Maps</h2>
+
+                <label>
+                    <!--域名映射表。例如" 'github': 'github.com' " = github.example.org => github.com 。以英文逗號(" , ")分割. 換行符和空格將會被忽略.-->
+                    <textarea
+                            required
+                            id="DomainMap"
+                            placeholder="
+                Please enter Domain Maps here, separated by commas (' , '). Newlines and spaces will be ignored.
+                Example:
+
+                  github: github.com,
+                  github-api: api.github.com"
+                    ></textarea>
+                </label>
+
+                <div class="line"></div>
+
+                <fieldset>
+                    <h2>Allow or Block</h2>
+
+                    <div>
+                        <input required type="radio" name="AllowOrBlockChooses" id="AllowList" onclick="AllowOrBlockRadioChanged(this)" />
+                        <label for="AllowList">AllowList</label>
+
+                        <label for="AllowListTextarea"></label>
+                        <textarea
+                                name=""
+                                id="AllowListTextarea"
+                                style="display: none;margin: 15px auto;"
+                                placeholder="
+                Please enter Allowed Domain Address here, separated by commas (' , '). Newlines and spaces will be ignored.
+                Example:
+
+                  114514.jp,
+                  114514.cn"
+                        ></textarea>
+                    </div>
+
+                    <div>
+                        <input required type="radio" name="AllowOrBlockChooses" id="BlockList" onclick="AllowOrBlockRadioChanged(this)" checked />
+                        <label for="BlockList">BlockList</label>
+
+                        <label for="BlockListTextarea"></label>
+                        <textarea
+                                name=""
+                                id="BlockListTextarea"
+                                style="display: block;margin: 15px auto;"
+                                placeholder="
                 Please enter Blocked Domain Address here, separated by commas (' , '). Newlines and spaces will be ignored.
                 Example:
 
                   114514.jp,
                   114514.cn"></textarea>
+                    </div>
+
+                </fieldset>
+            </div>
         </div>
 
     </fieldset>
 
-    <button onclick="PushConfig()" id="PushConfig">Fire!</button>
+
+
+    <button onclick="PushConfig()" id="PushConfig">Push config!</button>
     <p id="PushConfigStatus"></p>
 
 

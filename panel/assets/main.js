@@ -2,8 +2,9 @@ window.LocationHost = location.host;
 if (window.location.protocol === "file:") {
     document.getElementById("FileProtocolWarn").style.display = "block";
 }
+document.getElementById("URLProtocol").onclick = URLProtocolChecked;
 
-async function CheckPassword () {
+function CheckPassword () {
     let Password = document.getElementById("Password").value,
         PasswordStatus = document.getElementById("PasswordStatus");
 
@@ -14,78 +15,73 @@ async function CheckPassword () {
 
     PasswordStatus.innerText = "Checking"
 
-    fetch("https://" + window.LocationHost + "/api/check?password=" + Password)
-        .then(r => r.text())
-        .catch(()=>{return "CheckFailed"})
-        .then(r => {
-            if (r === "true") {
-                PasswordStatus.innerText = "CORRECT"
-            } else if (r === "CheckFailed") {
-                PasswordStatus.innerText = "(CheckFailed because network issue)"
-            } else if (r === "WrongPassword") {
-                PasswordStatus.innerText = "INCORRECT"
+    let xhr = new XMLHttpRequest();
+    xhr.open("GET", "https://" + window.LocationHost + "/api/check?password=" + Password, true);
+    xhr.onerror = function () {
+        xhr.onload = function(){};
+        let ErrorMsg = (function (){
+            if (xhr.response) {
+                return "because "+xhr.response;
             } else {
-                PasswordStatus.innerText = "(Something went wrong...)"
+                return "";
             }
-        })
+        })()
+        PasswordStatus.innerText = "Failed " + ErrorMsg;
+    }
+    xhr.onload = function () {
+        xhr.onerror = function(){};
+        if (xhr.response === "true") {
+            PasswordStatus.innerText = "CORRECT"
+        } else if (xhr.response === "WrongPassword") {
+            PasswordStatus.innerText = "INCORRECT"
+        } else {
+            PasswordStatus.innerText = "(Something went wrong...) " + xhr.response;
+        }
+    }
+    xhr.send();
+
 }
-async function SyncConfig () {
+function SyncConfig () {
     let SyncStatus = document.getElementById("SyncStatus"),
         Password = document.getElementById("Password").value;
 
     if (Password.length === 0) {
-        PasswordStatus.innerText = "Can't Be Blank";
+        SyncStatus.innerText = "Can't Be Blank";
         return false;
     }
 
     SyncStatus.innerText = "Checking"
 
-    if (Password === 0) {
-        SyncStatus.innerText = "Can't Be Blank";
-        return false;
-    }
-    fetch("https://" + window.LocationHost + "/api/sync?password=" + Password)
-        .then(r => r.text())
-        .catch(()=>{return "NetworkFailed"})
-        .then(r => {
-            if (r === "NetworkFailed") {
-                SyncStatus.innerText = "Failed because network issue."
-            } else if (r === "WrongPassword") {
-                SyncStatus.innerText = "Password is INCORRECT"
+
+
+    let xhr = new XMLHttpRequest();
+    xhr.open("GET", "https://" + window.LocationHost + "/api/sync?password=" + Password, true);
+    xhr.onerror = function () {
+        xhr.onload = function(){};
+        let ErrorMsg = (function (){
+            if (xhr.response) {
+                return "because "+xhr.response;
             } else {
-                try {
-                    let Config = JSON.parse(r);
-
-                    document.getElementById("ShowAvailableList").checked = Config.ShowAvailableList;
-                    document.getElementById("DisableCache").checked = Config.DisableCache;
-
-                    document.getElementById("HostDomain").value = Config.HostDomain.toArrayString();
-                    document.getElementById("BlockRegion").value = Config.BlockRegion.toArrayString();
-                    document.getElementById("BlockIP").value = Config.BlockIP.toArrayString();
-
-                    document.getElementById("URLProtocol").checked = Config.URLProtocol;
-                    URLProtocolChecked()
-
-                    document.getElementById("AllowList").checked = !!Config.AllowList;
-                    document.getElementById("AllowListTextarea").value = Config.AllowList
-                    document.getElementById("BlockList").checked = !!Config.BlockList;
-                    document.getElementById("BlockListTextarea").value = Config.BlockList;
-                    RadioChanged()
-
-                    document.getElementById("DomainMap").value =
-                        JSON.stringify(Config.DomainMap)
-                            .replace(/"/gi,"")
-                            .replace(/}/gi,"")
-                            .replace(/{/gi,"")
-                            .replace(/:/gi,": ")
-                            .replace(/,/gi,", \r\n")
-
-                    SyncStatus.innerText = "Successful";
-                } catch (e) {
-                    SyncStatus.innerText = "Sorry, something is going wrong."
-                }
+                return "";
             }
-        })
+        })()
+        SyncStatus.innerText = "Failed " + ErrorMsg;
+    }
+    xhr.onload = function () {
+        xhr.onerror = function(){};
+        if (xhr.response === "WrongPassword") {
+            SyncStatus.innerText = "Password is INCORRECT"
+        } else {
+            try {
+                ApplyConfig(JSON.parse(xhr.response))
+                SyncStatus.innerText = "Successful";
+            } catch (e) {
+                SyncStatus.innerText = "Sorry, something is going wrong. " + xhr.response;
+            }
+        }
+    }
+    xhr.send();
+
 }
 
 function PushConfig () {
@@ -94,30 +90,108 @@ function PushConfig () {
         Config = btoa(JSON.stringify(GenConfig()));
 
     if (Password.length === 0) {
-        PasswordStatus.innerText = "Can't Be Blank";
+        PushConfigStatus.innerText = "Can't Be Blank";
         return false;
     }
 
     PushConfigStatus.innerText = "Try to push..."
 
-    fetch(
+
+    let xhr = new XMLHttpRequest();
+    xhr.open("GET",
         "https://" + window.LocationHost +
         "/api/config?password=" + Password +
-        "&b64config=" + Config
-    )
-        .then(r => r.text())
-        .catch(()=>{return "NetworkFailed"})
-        .then(r => {
-            if (r === "true") {
-                PushConfigStatus.innerText = "Successful"
-            } else if (r === "WrongPassword") {
-                PushConfigStatus.innerText = "Password is incorrect"
-            } else if (r === "NetworkFailed") {
-                PushConfigStatus.innerText = "Failed because network issue."
+        "&b64config=" + Config,
+        true);
+    xhr.onerror = function () {
+        xhr.onload = function(){};
+        let ErrorMsg = (function (){
+            if (xhr.response) {
+                return "because "+xhr.response;
             } else {
-                PushConfigStatus.innerText = "Sorry, something is going wrong."
+                return "";
             }
-        })
+        })()
+        PushConfigStatus.innerText = "Failed " + ErrorMsg;
+    }
+    xhr.onload = function () {
+        xhr.onerror = function(){};
+        if (xhr.response === "true") {
+            PushConfigStatus.innerText = "Successful"
+        } else if (xhr.response === "WrongPassword") {
+            PushConfigStatus.innerText = "Password is incorrect"
+        } else {
+            PushConfigStatus.innerText = "Sorry, something is going wrong."
+        }
+    }
+    xhr.send();
+}
+
+function ParseOldConfig (ConfigCommand) {
+    document.getElementById("MigrateStatus").innerText = "Trying...";
+    ConfigCommand =
+        ConfigCommand + `
+    
+    let Config = {};
+    try {
+        HostDomain = DomainReplaceKey || [],
+        AllowList = AllowList || undefined,
+        BlockList = BlockList || undefined,
+        BlockRegion = BlockRegion || [],
+        BlockIP = BlockIP || [],
+        ShowAvailableList = ShowAvailableList || false,
+        URLProtocol = URLProtocol || false,
+        DisableCache = DisableCache || false,
+        DomainMap = DomainMap || {}; 
+    } catch (e) {}
+
+    Config.HostDomain = DomainReplaceKey;
+    Config.AllowList = AllowList;
+    Config.BlockList = BlockList;
+    Config.BlockRegion = BlockRegion;
+    Config.BlockIP = BlockIP;
+    Config.ShowAvailableList = ShowAvailableList;
+    Config.URLProtocol = URLProtocol;
+    Config.DisableCache = DisableCache;
+    Config.DomainMap = DomainMap;
+    
+    ApplyConfig (Config)
+    
+    document.getElementById("MigrateStatus").innerText = "Successful";
+    alert("Successful To Convert Old Config. \\r\\nDon't forget to PUSH config!");
+    document.getElementById("Config").checked = true;
+    MigrateOrConfigRadioChanged()
+    `
+    Function(ConfigCommand)()
+}
+
+// base on these ShitCodes(LOL)
+
+function ApplyConfig (Config) {
+
+    document.getElementById("ShowAvailableList").checked = Config.ShowAvailableList;
+    document.getElementById("DisableCache").checked = Config.DisableCache;
+
+    document.getElementById("HostDomain").value = Config.HostDomain.toArrayString();
+    document.getElementById("BlockRegion").value = Config.BlockRegion.toArrayString();
+    document.getElementById("BlockIP").value = Config.BlockIP.toArrayString();
+
+    document.getElementById("URLProtocol").checked = Config.URLProtocol;
+    URLProtocolChecked();
+
+    document.getElementById("AllowList").checked = !!Config.AllowList;
+    document.getElementById("AllowListTextarea").value = (Config.AllowList || []).toArrayString();
+    document.getElementById("BlockList").checked = !!Config.BlockList;
+    document.getElementById("BlockListTextarea").value = (Config.BlockList || []).toArrayString();
+    AllowOrBlockRadioChanged();
+
+    document.getElementById("DomainMap").value =
+        JSON.stringify(Config.DomainMap)
+            .replace(/"/gi,"")
+            .replace(/}/gi,"")
+            .replace(/{/gi,"")
+            .replace(/:/gi,": ")
+            .replace(/,/gi,", \r\n")
 }
 
 function GenConfig () {
@@ -138,15 +212,6 @@ function GenConfig () {
                 return false;
             }
         })()
-
-    Config.AllowList =
-        (function (){
-            if (document.getElementById("AllowList").checked) {
-                return undefined
-            } else {
-                return document.getElementById("AllowListTextarea").value.toArray()
-            }
-        })();
 
     Config.BlockList =
         (function (){
@@ -179,13 +244,23 @@ function GenConfig () {
 
 }
 
-function RadioChanged () {
+function AllowOrBlockRadioChanged () {
     if (document.getElementById("AllowList").checked) {
         document.getElementById("AllowListTextarea").style.display = "block"
         document.getElementById("BlockListTextarea").style.display = "none"
     } else if (document.getElementById("BlockList").checked) {
         document.getElementById("AllowListTextarea").style.display = "none"
         document.getElementById("BlockListTextarea").style.display = "block"
+    }
+}
+
+function MigrateOrConfigRadioChanged () {
+    if (document.getElementById("Migrate").checked) {
+        document.getElementById("MigrateDiv").style.display = "block"
+        document.getElementById("ConfigDiv").style.display = "none"
+    } else if (document.getElementById("Config").checked) {
+        document.getElementById("MigrateDiv").style.display = "none"
+        document.getElementById("ConfigDiv").style.display = "block"
     }
 }
 
@@ -196,8 +271,6 @@ function URLProtocolChecked () {
         document.getElementById("URLProtocolInput").style.display = "none";
     }
 }
-document.getElementById("URLProtocol").onclick = URLProtocolChecked;
-
 
 String.prototype.toArray = function(){
     if (this.length === 0) {
