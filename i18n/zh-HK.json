@@ -1,0 +1,15 @@
+{
+  "WorkersDevNotSupport": "!!!!!! Auto-Proxy 目前不支持 *.workers.dev 子域. !!!!!! \r\n\r\n",
+  "ReturnUsage": "使用方式: 您想要請求的域名是: example.org \r\n    那麽您應該請求: example-x-org.",
+  "Introduce": "這是一個基於 Cloudflare Workers 的自動代理脚本. \r\n\r\n",
+  "Limit": "請求限制: 每天 100,000 請求 \r\n    每10分鐘 1,000 請求 \r\n\r\n",
+  "Deploy": "部署你自己的 Auto Proxy ! 開源專案 Github 地址 (https://github.com/kobe-koto/auto-proxy-cf).\r\n",
+  "Copyright": "版權所有 kobe-koto, 使用 AGPL-3.0 許可證.\r\n",
+  "DomainBlocked": "域名在 BlockList 内. \r\n\r\n",
+  "DomainNotAllow": "域名不在 AllowList 内. \r\n\r\n",
+  "BlockList": "阻止的域名: \r\n",
+  "AllowList": "允許的域名: \r\n",
+  "ConfError": "配置錯誤. AllowList 和 BlockList 不能在同一時間被配置. \r\n",
+  "RegionBlocked": "您所在的地區已經被此站點屏蔽. ",
+  "IPBlocked": "您的 IP 位址已經被此站點屏蔽. "
+}
