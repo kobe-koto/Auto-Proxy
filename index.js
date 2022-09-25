@@ -1,6 +1,9 @@
 //your password.
 const Password = "LOL"
 
+//定義要從何處獲取i18n資料.
+let GetI18NDataAPI = "https://github.com/kobe-koto/Auto-Proxy/raw/main/i18n/";
+
 addEventListener("fetch", event => {
     event.respondWith(fetchAndApply(event.request));
 })
@@ -157,8 +160,8 @@ async function fetchAndApply(request) {
             ContentType.includes("UTF-8")
         ) {
             ReplacedText = await OriginalResponse.text()
-            let OriginalDomainReplacer = new RegExp(ProxyDomain,"gi");
-            ReplacedText = ReplacedText.replace(OriginalDomainReplacer, url.host);
+            let OriginalDomainReplacer = new RegExp("//" + ProxyDomain,"gi");
+            ReplacedText = ReplacedText.replace(OriginalDomainReplacer, "//" + url.host);
         } else {
             ReplacedText = OriginalResponse.body
         }
@@ -173,9 +176,6 @@ async function fetchAndApply(request) {
 }
 
 AutoProxySpace = AutoProxySpace || {};
-
-//定義要從何處獲取i18n資料.
-let GetI18NDataAPI = "https://github.com/kobe-koto/Auto-Proxy/raw/main/i18n/";
 
 //定義UniHeader。。。你一般不需要操心這個東西。
 const UniHeader = {
@@ -271,41 +271,62 @@ async function GetI18NData (request) {
         }
     })()
 
-    let LangData = await AutoProxySpace.get(LangCode);
-    if (LangData === null) {
-        let LangDataUpToDate = await fetch(
-            GetI18NDataAPI +
-            LangCode +
-            ".json"
-        ).then(res => res.json())
-            .catch(() => {});
+    let LangData = await (async function (){
+        let LangData = await AutoProxySpace.get(LangCode);
+        if (LangData === null) {
+            let LangDataUpToDate = await fetch(
+                GetI18NDataAPI +
+                LangCode +
+                ".json"
+            ).then(res => res.json())
+                .catch(() => {});
 
-        if (LangDataUpToDate === undefined) {
-            LangDataUpToDate = await AutoProxySpace.get("en");
-            LangDataUpToDate = JSON.parse(LangDataUpToDate);
-            if (LangDataUpToDate === null) {
-                LangDataUpToDate = await fetch(
-                    GetI18NDataAPI +
-                    "en.json"
-                ).then(res => res.json())
-                    .catch(() => {})
-                AutoProxySpace.put("en", JSON.stringify(LangDataUpToDate));
-                LangDataUpToDate.LangNotFindMsg = "\r\nLang \""+LangCode+"\" not find, use english instead"
+            if (LangDataUpToDate === undefined) {
+                LangDataUpToDate = await AutoProxySpace.get("en");
+                LangDataUpToDate = JSON.parse(LangDataUpToDate);
+                if (LangDataUpToDate === null) {
+                    LangDataUpToDate = await fetch(
+                        GetI18NDataAPI +
+                        "en.json"
+                    ).then(res => res.json())
+                        .catch(() => {})
+                    AutoProxySpace.put("en", JSON.stringify(LangDataUpToDate));
+                    LangDataUpToDate.LangNotFindMsg = "\r\nLang \""+LangCode+"\" not find, use english instead"
+                } else {
+                    LangDataUpToDate.LangNotFindMsg = "\r\nLang \""+LangCode+"\" not find, use english instead"
+                }
             } else {
-                LangDataUpToDate.LangNotFindMsg = "\r\nLang \""+LangCode+"\" not find, use english instead"
+                AutoProxySpace.put(LangCode, JSON.stringify(LangDataUpToDate));
             }
+            return LangDataUpToDate;
         } else {
-            AutoProxySpace.put(LangCode, JSON.stringify(LangDataUpToDate));
+            return JSON.parse(LangData);
         }
-        return LangDataUpToDate;
-    } else {
-        return JSON.parse(LangData);
-    }
+    })()
+    LangData.WorkersDevNotSupport = LangData.WorkersDevNotSupport || " Error ";
+    LangData.ReturnUsage = LangData.ReturnUsage || " Error ";
+    LangData.Introduce = LangData.Introduce || " Error ";
+    LangData.Limit = LangData.Limit || " Error ";
+    LangData.Deploy = LangData.Deploy || " Error ";
+    LangData.Copyright = LangData.Copyright || " Error ";
+    LangData.DomainBlocked = LangData.DomainBlocked || " Error ";
+    LangData.DomainNotAllow = LangData.DomainNotAllow || " Error ";
+    LangData.BlockList = LangData.BlockList || " Error ";
+    LangData.AllowList = LangData.AllowList || " Error ";
+    LangData.ConfError = LangData.ConfError || " Error ";
+    LangData.RegionBlocked = LangData.RegionBlocked || " Error ";
+    LangData.IPBlocked = LangData.IPBlocked || " Error ";
+
+    return LangData;
 }
 
 function GetQueryString(url, name) {
     let reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)", "i");
-    let r = url.search.substr(1).match(reg);
+    let r = url.search.slice(1).match(reg);
 
-    if (r != null) {return r[2];} else {return null;}
+    if (r != null) {
+        return r[2];
+    } else {
+        return null;
+    }
 }
