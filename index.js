@@ -8,7 +8,7 @@ addEventListener("fetch", event => {
     event.respondWith(fetchAndApply(event.request));
 })
 
-async function fetchAndApply(request) {
+async function fetchAndApply (request) {
 
     let config = (
         JSON.parse(await AutoProxySpace.get("_config")) ||
@@ -96,21 +96,17 @@ async function fetchAndApply(request) {
         }
 
 
-        let ReturnUsage = (function () {
-            if (url.host.slice(-12) === ".workers.dev") {
-                return i18nData.WorkersDevNotSupport;
-            } else {
-                return i18nData.ReturnUsage + url.host + "\r\n\r\n";
-            }
-        })()
+        let ReturnUsage =
+            (url.host.slice(-12) === ".workers.dev")
+                ? i18nData.WorkersDevNotSupport
+                : i18nData.ReturnUsage + url.host + "\r\n\r\n";
 
         return new Response("" +
             i18nData.Introduce +
             ReturnUsage +
             i18nData.Limit +
             i18nData.Deploy +
-            i18nData.Copyright +
-            (i18nData.LangNotFindMsg || ""),
+            i18nData.Copyright,
             { headers: UniHeader }
         );
     }
@@ -150,7 +146,7 @@ async function fetchAndApply(request) {
     const ContentType = NewResponseHeaders.get("content-type");
 
     let ReplacedText;
-    if (ContentType !== null && ContentType !== undefined) {
+    if (ContentType) {
         if (
             (
                 ContentType.includes("text/html") ||
@@ -184,92 +180,63 @@ const UniHeader = {
     "Cache-Control": "no-store"
 };
 
-function isBlock (config,i18nData,request,ProxyDomain) {
+function isBlock (config, i18nData, request, ProxyDomain) {
     //檢查用戶是不是在BlockRegion發起的請求。是則返回對應的403頁面。
-    if (request.headers.get("CF-IPCountry") !== null && !!config.BlockRegion && config.BlockRegion.includes(request.headers.get("CF-IPCountry"))) {
+    if (request.headers.get("CF-IPCountry") && config.BlockRegion && config.BlockRegion.includes(request.headers.get("CF-IPCountry"))) {
         return new Response(
             i18nData.DomainBlocked +
-            i18nData.Deploy +
-            (i18nData.LangNotFindMsg || ""),
+            i18nData.Deploy,
             { headers: UniHeader, status:403 }
         );
     }
 
     //檢查用戶的IP是否在BlockIP内。是則返回對應的403頁面。
-    if (request.headers.get("cf-connecting-ip") !== null && !!config.BlockIP && config.BlockIP.includes(request.headers.get("cf-connecting-ip"))) {
+    if (request.headers.get("cf-connecting-ip") && config.BlockIP && config.BlockIP.includes(request.headers.get("cf-connecting-ip"))) {
         return new Response(
             i18nData.IPBlocked +
-            i18nData.Deploy +
-            (i18nData.LangNotFindMsg || ""),
+            i18nData.Deploy,
             { headers: UniHeader, status:403 }
         );
     }
 
     //檢查用戶請求的ProxyDomain是否在BlockList内或AllowList外，是則返回403頁面。
-    if (config.BlockList !== undefined && config.AllowList === undefined && config.BlockList.includes(ProxyDomain)) {
+    if (config.BlockList && config.BlockList.includes(ProxyDomain)) {
 
-        let BlockListText = (function (){
-            if (config.ShowAvailableList) {
-                let ReturnValue = i18nData.BlockList;
-                for (let b in config.BlockList) {
-                    ReturnValue += " " + config.BlockList[b] + "\r\n";
-                }
-                return ReturnValue;
-            } else {
-                return "";
-            }
-        })()
+        let BlockListText = config.ShowAvailableList
+            ? i18nData.BlockList.toString().replace(/,/, ", /r/n")
+            : "";
 
         return new Response(
             i18nData.DomainBlocked +
             BlockListText +
-            i18nData.Deploy +
-            (i18nData.LangNotFindMsg || ""),
+            i18nData.Deploy,
             { headers: UniHeader, status:403 }
         );
 
-    } else if (config.BlockList === undefined && config.AllowList !== undefined && !config.AllowList.includes(ProxyDomain)) {
+    } else if (config.AllowList && !config.AllowList.includes(ProxyDomain)) {
 
-        let AllowListText = (function (){
-            if (config.ShowAvailableList) {
-                let ReturnValue = i18nData.AllowList;
-                for (let b in config.AllowList) {
-                    ReturnValue += " " + config.AllowList[b] + "\r\n";
-                }
-                return ReturnValue;
-            } else {
-                return "";
-            }
-        })()
+        let AllowListText = config.ShowAvailableList
+            ? i18nData.AllowList.toString().replace(/,/, ", /r/n")
+            : "";
 
         return new Response(
             i18nData.DomainNotAllow +
             AllowListText +
-            i18nData.Deploy +
-            (i18nData.LangNotFindMsg || ""),
+            i18nData.Deploy,
             { headers: UniHeader, status:403 }
         );
 
-    } else if ((config.BlockList !== undefined) && (config.AllowList !== undefined)){
-        //（靠北哦怎麽會有人這樣子搞的）
-        return new Response(i18nData.ConfError + (i18nData.LangNotFindMsg || ""),{
-            headers: UniHeader
-        });
     }
 }
 
 async function GetI18NData (request) {
-    let LangCode = (function () {
-        if (
-            request.headers.get("accept-language") !== null
-        ) {
-            return request.headers.get("accept-language")
+    let LangCode =
+        (request.headers.get("accept-language"))
+            ? request.headers.get("accept-language")
                 .split(";")[0]
-                .split(",")[0];
-        } else {
-            return "en";
-        }
-    })()
+                .split(",")[0]
+            : "en"
+
 
     let LangData = await (async function (){
         let LangData = await AutoProxySpace.get(LangCode);
@@ -324,9 +291,5 @@ function GetQueryString(url, name) {
     let reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)", "i");
     let r = url.search.slice(1).match(reg);
 
-    if (r != null) {
-        return r[2];
-    } else {
-        return null;
-    }
+    return (r !== null) ? r[2] : null;
 }
