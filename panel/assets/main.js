@@ -41,7 +41,7 @@ function CheckPassword () {
     xhr.send();
 
 }
-function SyncConfig () {
+function PullConfig () {
     let SyncStatus = document.getElementById("SyncStatus"),
         Password = document.getElementById("Password").value;
 
@@ -83,7 +83,6 @@ function SyncConfig () {
     xhr.send();
 
 }
-
 function PushConfig () {
     let PushConfigStatus = document.getElementById("PushConfigStatus"),
         Password = document.getElementById("Password").value,
@@ -205,53 +204,35 @@ function GenConfig () {
     Config.DisableCache = document.getElementById("DisableCache").checked;
 
     Config.URLProtocol =
-        (function (){
-            if (document.getElementById("URLProtocol").checked) {
-                return document.getElementById("URLProtocolInput").value;
-            } else {
-                return false;
-            }
-        })()
+        document.getElementById("URLProtocol").checked
+            ? document.getElementById("URLProtocolInput").value
+            : false;
 
     Config.BlockList =
-        (function (){
-            if (document.getElementById("AllowList").checked) {
-                return undefined
-            } else {
-                return document.getElementById("BlockListTextarea").value.toArray()
-            }
-        })();
+        document.getElementById("BlockList").checked
+            ? document.getElementById("BlockListTextarea").value.toArray()
+            : undefined;
 
     Config.AllowList =
-        (function (){
-            if (document.getElementById("BlockList").checked) {
-                return undefined
-            } else {
-                return document.getElementById("AllowListTextarea").value.toArray()
-            }
-        })();
+        document.getElementById("AllowList").checked
+            ? document.getElementById("AllowListTextarea").value.toArray()
+            : undefined;
 
-    Config.DomainMap =
-        (function () {
-            let DomainMapArray = document.getElementById("DomainMap").value.toArray(), TempDomainMap = {};
-            for (let r=0;r<DomainMapArray.length;r++) {
-                TempDomainMap[DomainMapArray[r].split(":")[0]] = DomainMapArray[r].split(":")[1]
-            }
-            return TempDomainMap
-        })();
+    Config.DomainMap = document.getElementById("DomainMap").value.toObject()
+    //Config.ReplaceMap = document.getElementById("ReplaceMap").value.toObject()
 
     return Config;
-
 }
 
 function AllowOrBlockRadioChanged () {
-    if (document.getElementById("AllowList").checked) {
-        document.getElementById("AllowListTextarea").style.display = "block"
-        document.getElementById("BlockListTextarea").style.display = "none"
-    } else if (document.getElementById("BlockList").checked) {
-        document.getElementById("AllowListTextarea").style.display = "none"
-        document.getElementById("BlockListTextarea").style.display = "block"
-    }
+    document.getElementById("AllowListTextarea").style.display =
+        document.getElementById("AllowList").checked
+            ? "block"
+            : "none"
+    document.getElementById("BlockListTextarea").style.display =
+        document.getElementById("BlockList").checked
+            ? "block"
+            : "none"
 }
 
 function MigrateOrConfigRadioChanged () {
@@ -265,11 +246,10 @@ function MigrateOrConfigRadioChanged () {
 }
 
 function URLProtocolChecked () {
-    if (document.getElementById("URLProtocol").checked) {
-        document.getElementById("URLProtocolInput").style.display = "block";
-    } else {
-        document.getElementById("URLProtocolInput").style.display = "none";
-    }
+    document.getElementById("URLProtocolInput").style.display =
+        document.getElementById("URLProtocol").checked
+            ? "block"
+            : "none";
 }
 
 String.prototype.toArray = function(){
@@ -284,6 +264,13 @@ String.prototype.toArray = function(){
                 .split(",")
         );
     }
+}
+String.prototype.toObject = function(){
+    let TempArray = this.toArray(), Object = {};
+    for (let t=0;t<this.length;t++) {
+        Object[TempArray[t].split(":")[0]] = TempArray[t].split(":")[1]
+    }
+    return Object ? Object : {};
 }
 
 Array.prototype.toArrayString = function(){
