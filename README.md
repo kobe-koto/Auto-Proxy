@@ -1,6 +1,10 @@
-# Auto-Proxy-CF
+# Auto-Proxy
 
 **一個適用於 CF Workers 的自動按網域代理的脚本！**
+
+## 附加条款:
+
+1. 當您僅在 Auto-Proxy 原始碼中定義 `password` 常量字段時, 可以不公開原始碼. 若您在 Auto-Proxy 原始碼中定義 `password` 常量字段時還修改了程式的其他部分, 請公開您修改過的原始碼, 並將 `password` 常量字段定義爲 `null`.
 
 ## 使用方法: 
 
