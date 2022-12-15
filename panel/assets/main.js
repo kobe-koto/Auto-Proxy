@@ -164,7 +164,7 @@ function ParseOldConfig (ConfigCommand) {
     Function(ConfigCommand)()
 }
 
-// base on these ShitCodes(LOL)
+// base on these ShitCodes
 
 function ApplyConfig (Config) {
 
@@ -267,7 +267,7 @@ String.prototype.toArray = function(){
 }
 String.prototype.toObject = function(){
     let TempArray = this.toArray(), Object = {};
-    for (let t=0;t<this.length;t++) {
+    for (let t=0;t<TempArray.length;t++) {
         Object[TempArray[t].split(":")[0]] = TempArray[t].split(":")[1]
     }
     return Object ? Object : {};
