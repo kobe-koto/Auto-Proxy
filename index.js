@@ -150,14 +150,14 @@ async function fetchAndApply (request) {
         if (
             (
                 ContentType.includes("text/html") ||
-                ContentType.includes("text/javascript") ||
+                ContentType.includes("application/javascript") ||
+                ContentType.includes("text/plain") ||
                 ContentType.includes("text/css")
-            ) &&
-            ContentType.includes("UTF-8")
+            )
         ) {
             ReplacedText = await OriginalResponse.text()
-            let OriginalDomainReplacer = new RegExp("//" + ProxyDomain,"gi");
-            ReplacedText = ReplacedText.replace(OriginalDomainReplacer, "//" + url.host);
+            let OriginalDomainReplacer = new RegExp(ProxyDomain,"gi");
+            ReplacedText = ReplacedText.replace(OriginalDomainReplacer, url.host);
         } else {
             ReplacedText = OriginalResponse.body
         }
