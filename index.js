@@ -1,6 +1,8 @@
 //your password.
 const Password = "LOL"
 
+const WarningHTML = `<div style="position: fixed;bottom: 10px;right: 0;background-color: rgba(255,255,255,0.75);color: #232323;padding: 20px 10px 20px 20px;border-top-left-radius: 25px;border-bottom-left-radius: 25px;font-size: large;max-width: 25%;backdrop-filter: blur(15px);">Please note this site is NOT affiliated with %url.host, It is a proxy Site. <a href="javascript:void(0)" onclick="this.parentElement.remove()">Close</a></div>`
+
 //定義要從何處獲取i18n資料.
 let GetI18NDataAPI = "https://github.com/kobe-koto/Auto-Proxy/raw/main/i18n/";
 
@@ -143,7 +145,16 @@ async function fetchAndApply (request) {
     NewResponseHeaders.delete("content-security-policy-report-only");
     NewResponseHeaders.delete("clear-site-data");
 
-    const ContentType = NewResponseHeaders.get("content-type");
+    // replace cookie domain to target domain.
+    NewResponseHeaders.set(
+        "set-cookie",
+        NewResponseHeaders.get("set-cookie")
+            .replace(
+                (new RegExp(ProxyDomain,"gi")),
+                url.hostname
+            )
+    )
+
 
     let ReplacedText;
     if (ContentType) {
@@ -160,6 +171,9 @@ async function fetchAndApply (request) {
             ReplacedText = ReplacedText.replace(OriginalDomainReplacer, url.host);
         } else {
             ReplacedText = OriginalResponse.body
+        }
+        if (ContentType.includes("text/html") && config.WarningEnabled) {
+            ReplacedText = ReplacedText + WarningHTML
         }
     } else {
         ReplacedText = OriginalResponse.body
