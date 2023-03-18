@@ -1,4 +1,4 @@
-//your password.
+// your password.
 const Password = "LOL"
 
 const WarningHTML = `<div style="position: fixed;bottom: 10px;right: 0;background-color: rgba(255,255,255,0.75);color: #232323;padding: 20px 10px 20px 20px;border-top-left-radius: 25px;border-bottom-left-radius: 25px;font-size: large;max-width: 25%;backdrop-filter: blur(15px);">Please note this site is NOT affiliated with %url.host, It is a proxy Site. <a href="javascript:void(0)" onclick="this.parentElement.remove()">Close</a></div>`
@@ -10,8 +10,48 @@ addEventListener("fetch", event => {
     event.respondWith(fetchAndApply(event.request));
 })
 
-async function fetchAndApply (request) {
+async function HandleHostDomainRequest(ProxyDomain, url, config, request) {
+    if (
+        config.NotConfig &&
+        url.pathname.slice(0,6) !== "/panel" &&
+        url.pathname.slice(0,4) !== "/api"
+    ) {
+        return Response.redirect(`${url.protocol}//${url.host}/panel/`, 307)
+    }
 
+    // handle panel request.
+    if (url.pathname.toLowerCase().startsWith("/panel")) {
+        let PanelRes = await fetch(`https://kobe-koto.github.io/Auto-Proxy/${url.pathname}`);
+        let status = PanelRes.status;
+        return new Response(PanelRes.body, {status ,headers: PanelRes.headers});
+    }
+    if (url.pathname.toLowerCase().startsWith("/api")) {
+        return HandleAPIRequest(url, config)
+    }
+
+    let i18nData = await GetI18NData (
+        request.headers.get("accept-language")
+            ? request.headers.get("accept-language")
+                .split(";")[0]
+                .split(",")[0]
+            : "en"
+    );
+
+    return new Response("" +
+        i18nData.Introduce +
+        (
+            url.host.endsWith(".workers.dev")
+            ? i18nData.WorkersDevNotSupport
+            : i18nData.ReturnUsage + url.host + "\r\n\r\n"
+        ) +
+        i18nData.Limit +
+        i18nData.Deploy +
+        i18nData.Copyright,
+        { headers: UniHeader }
+    );
+}
+
+async function fetchAndApply (request) {
     let config = (
         JSON.parse(await AutoProxySpace.get("_config")) ||
         {
@@ -24,8 +64,6 @@ async function fetchAndApply (request) {
             "BlockList": []
         }
     );
-
-    let i18nData = await GetI18NData (request);
 
     let url = new URL(request.url);
     if (!!config.URLProtocol) {
@@ -54,72 +92,30 @@ async function fetchAndApply (request) {
     })()
 
     //如果用戶請求了主域名則返回提示。
-
     if (ProxyDomain === "" || ProxyDomain === url.host) {
-
-        if (
-            config.NotConfig &&
-            (
-                url.pathname.slice(0,6) !== "/panel" &&
-                url.pathname.slice(0,4) !== "/api"
-            )
-        ) {
-            return Response.redirect(
-                url.protocol +
-                "//" +
-                url.host  +
-                "/panel/",
-                307)
-        }
-
-        if (url.pathname.match(/\/panel\//gi)) {
-            let PanelRes = await fetch("https://kobe-koto.github.io/Auto-Proxy/"+url.pathname);
-            let status = PanelRes.status;
-            return new Response(PanelRes.body, {status,headers: PanelRes.headers});
-        }
-
-        if (url.pathname === "/api/check") {
-            if (Password === GetQueryString(url, "password")) {
-                return new Response("true", {headers: UniHeader});
-            } else {
-                return new Response("WrongPassword", {headers: UniHeader});
-            }
-        } else if (url.pathname === "/api/config") {
-            if (Password !== GetQueryString(url, "password")) {
-                return new Response("WrongPassword", {headers: UniHeader});
-            }
-            AutoProxySpace.put("_config", atob(GetQueryString(url,"b64config").replace(/%3D/gi,"=")))
-            return new Response("true", {headers: UniHeader});
-        } else if (url.pathname === "/api/sync") {
-            if (Password !== GetQueryString(url, "password")) {
-                return new Response("WrongPassword", {headers: UniHeader});
-            }
-            return new Response(JSON.stringify(config), {headers: UniHeader});
-        }
-
-
-        let ReturnUsage =
-            (url.host.slice(-12) === ".workers.dev")
-                ? i18nData.WorkersDevNotSupport
-                : i18nData.ReturnUsage + url.host + "\r\n\r\n";
-
-        return new Response("" +
-            i18nData.Introduce +
-            ReturnUsage +
-            i18nData.Limit +
-            i18nData.Deploy +
-            i18nData.Copyright,
-            { headers: UniHeader }
-        );
+        return await HandleHostDomainRequest(ProxyDomain, url, config, request)
     }
 
-    isBlock(config,i18nData,request,ProxyDomain);
+    let BlockedStatus = await isBlock(config, request, ProxyDomain);
+    if (BlockedStatus !== false) {
+        return new Response(
+            BlockedStatus,
+            { headers: UniHeader, status:403 }
+        );
+    }
 
     //isBlock的過了的話就開始請求要訪問的位址了。
     let NewRequestHeaders = new Headers(request.headers);
 
     NewRequestHeaders.set("Host", ProxyDomain);
     NewRequestHeaders.set("Referer", ProxyDomain);
+
+    NewRequestHeaders.delete("cf-connecting-ip");
+    NewRequestHeaders.delete("cf-IPCountry");
+    NewRequestHeaders.delete("cf-ray");
+    NewRequestHeaders.delete("cf-visitor");
+    NewRequestHeaders.delete("x-real-ip");
+    NewRequestHeaders.delete("host");
 
     let OriginalResponse = await fetch(url.protocol+"//"+ProxyDomain+url.pathname+url.search, {
         method: request.method,
@@ -145,6 +141,9 @@ async function fetchAndApply (request) {
     NewResponseHeaders.delete("content-security-policy-report-only");
     NewResponseHeaders.delete("clear-site-data");
 
+
+
+    const ContentType = NewResponseHeaders.get("content-type");
     // replace cookie domain to target domain.
     NewResponseHeaders.set(
         "set-cookie",
@@ -187,123 +186,144 @@ async function fetchAndApply (request) {
 
 AutoProxySpace = AutoProxySpace || {};
 
-//定義UniHeader。。。你一般不需要操心這個東西。
+//定義UniHeader
 const UniHeader = {
     "Content-Type": "application/json;charset=UTF-8",
     "Access-Control-Allow-Origin": "*",
     "Cache-Control": "no-store"
 };
 
-function isBlock (config, i18nData, request, ProxyDomain) {
-    //檢查用戶是不是在BlockRegion發起的請求。是則返回對應的403頁面。
-    if (request.headers.get("CF-IPCountry") && config.BlockRegion && config.BlockRegion.includes(request.headers.get("CF-IPCountry"))) {
-        return new Response(
-            i18nData.DomainBlocked +
-            i18nData.Deploy,
-            { headers: UniHeader, status:403 }
-        );
-    }
-
-    //檢查用戶的IP是否在BlockIP内。是則返回對應的403頁面。
-    if (request.headers.get("cf-connecting-ip") && config.BlockIP && config.BlockIP.includes(request.headers.get("cf-connecting-ip"))) {
-        return new Response(
-            i18nData.IPBlocked +
-            i18nData.Deploy,
-            { headers: UniHeader, status:403 }
-        );
-    }
-
-    //檢查用戶請求的ProxyDomain是否在BlockList内或AllowList外，是則返回403頁面。
-    if (config.BlockList && config.BlockList.includes(ProxyDomain)) {
-
-        let BlockListText = config.ShowAvailableList
-            ? i18nData.BlockList.toString().replace(/,/, ", /r/n")
-            : "";
-
-        return new Response(
-            i18nData.DomainBlocked +
-            BlockListText +
-            i18nData.Deploy,
-            { headers: UniHeader, status:403 }
-        );
-
-    } else if (config.AllowList && !config.AllowList.includes(ProxyDomain)) {
-
-        let AllowListText = config.ShowAvailableList
-            ? i18nData.AllowList.toString().replace(/,/, ", /r/n")
-            : "";
-
-        return new Response(
-            i18nData.DomainNotAllow +
-            AllowListText +
-            i18nData.Deploy,
-            { headers: UniHeader, status:403 }
-        );
-
-    }
-}
-
-async function GetI18NData (request) {
-    let LangCode =
-        (request.headers.get("accept-language"))
-            ? request.headers.get("accept-language")
-                .split(";")[0]
-                .split(",")[0]
-            : "en"
-
-
-    let LangData = await (async function (){
-        let LangData = await AutoProxySpace.get(LangCode);
-        if (LangData === null) {
-            let LangDataUpToDate = await fetch(
-                GetI18NDataAPI +
-                LangCode +
-                ".json"
-            ).then(res => res.json())
-                .catch(() => {});
-
-            if (LangDataUpToDate === undefined) {
-                LangDataUpToDate = await AutoProxySpace.get("en");
-                LangDataUpToDate = JSON.parse(LangDataUpToDate);
-                if (LangDataUpToDate === null) {
-                    LangDataUpToDate = await fetch(
-                        GetI18NDataAPI +
-                        "en.json"
-                    ).then(res => res.json())
-                        .catch(() => {})
-                    AutoProxySpace.put("en", JSON.stringify(LangDataUpToDate));
-                    LangDataUpToDate.LangNotFindMsg = "\r\nLang \""+LangCode+"\" not find, use english instead"
-                } else {
-                    LangDataUpToDate.LangNotFindMsg = "\r\nLang \""+LangCode+"\" not find, use english instead"
-                }
-            } else {
-                AutoProxySpace.put(LangCode, JSON.stringify(LangDataUpToDate));
-            }
-            return LangDataUpToDate;
+function HandleAPIRequest (url, config) {
+    if (url.pathname === "/api/check") {
+        if (Password === GetQueryString(url, "password")) {
+            return new Response("true", {headers: UniHeader});
         } else {
-            return JSON.parse(LangData);
+            return new Response("WrongPassword", {headers: UniHeader});
         }
-    })()
-    LangData.WorkersDevNotSupport = LangData.WorkersDevNotSupport || " Error ";
-    LangData.ReturnUsage = LangData.ReturnUsage || " Error ";
-    LangData.Introduce = LangData.Introduce || " Error ";
-    LangData.Limit = LangData.Limit || " Error ";
-    LangData.Deploy = LangData.Deploy || " Error ";
-    LangData.Copyright = LangData.Copyright || " Error ";
-    LangData.DomainBlocked = LangData.DomainBlocked || " Error ";
-    LangData.DomainNotAllow = LangData.DomainNotAllow || " Error ";
-    LangData.BlockList = LangData.BlockList || " Error ";
-    LangData.AllowList = LangData.AllowList || " Error ";
-    LangData.ConfError = LangData.ConfError || " Error ";
-    LangData.RegionBlocked = LangData.RegionBlocked || " Error ";
-    LangData.IPBlocked = LangData.IPBlocked || " Error ";
-
-    return LangData;
+    } else if (url.pathname === "/api/config") {
+        if (Password !== GetQueryString(url, "password")) {
+            return new Response("WrongPassword", {headers: UniHeader});
+        }
+        AutoProxySpace.put("_config", atob(GetQueryString(url,"b64config").replace(/%3D/gi,"=")))
+        return new Response("true", {headers: UniHeader});
+    } else if (url.pathname === "/api/sync") {
+        if (Password !== GetQueryString(url, "password")) {
+            return new Response("WrongPassword", {headers: UniHeader});
+        }
+        return new Response(JSON.stringify(config), {headers: UniHeader});
+    }
 }
 
+
+/**
+ * check if need to return Block info.
+ * @returns {String|Boolean: false}
+ */
+async function isBlock (config, request, ProxyDomain) {
+    let BlockedObject = {},
+        i18nData = null,
+        BlockedStatus = false;
+
+    // 檢查用戶的 Region 是否在 BlockRegion 内.
+    BlockedObject.RegionBlocked = config.BlockRegion && request.headers.get("CF-IPCountry") && config.BlockRegion.includes(request.headers.get("CF-IPCountry"));
+    // 檢查用戶的 IP 是否在 BlockIP 内.
+    BlockedObject.IPBlocked = config.BlockIP && request.headers.get("cf-connecting-ip") && config.BlockIP.includes(request.headers.get("cf-connecting-ip"));
+
+    // 檢查用戶請求的 ProxyDomain 是否在 BlockList 内/ AllowList 外.
+    // note: due auto-proxy panel's develop, BlockList and AllowList cannot defined together now.
+    BlockedObject.DomainBlocked = config.BlockList && config.BlockList.includes(ProxyDomain);
+    BlockedObject.DomainNotAllow = config.AllowList && !config.AllowList.includes(ProxyDomain)
+
+
+
+    for (let i in BlockedObject) {
+        if (BlockedObject[i] === true) {
+            i18nData = await GetI18NData (
+                request.headers.get("accept-language")
+                    ? request.headers.get("accept-language")
+                        .split(";")[0]
+                        .split(",")[0]
+                    : "en"
+            );
+        }
+    }
+    if (i18nData !== null) {
+        BlockedStatus = ""
+        for (let i in BlockedObject) {
+            if (BlockedObject[i] === true) {
+                BlockedStatus += i18nData[i];
+                //if (i.match(/(DomainBlocked|DomainNotAllow)/))
+                if (i === "DomainBlocked") {
+                    BlockedStatus += config.ShowAvailableList
+                        ? config.BlockList.toString().replace(/,/, ", /r/n")
+                        : "";
+                } else if (i === "DomainNotAllow") {
+                    BlockedStatus += config.ShowAvailableList
+                        ? config.AllowList.toString().replace(/,/, ", /r/n")
+                        : "";
+                }
+            }
+        }
+        BlockedStatus += i18nData.Deploy;
+    }
+    return BlockedStatus;
+}
+
+/**
+ * Get i18n data via KV or Github.
+ * @param LangCode {String} like "zh-cn", "zh-tw" and "en".
+ * @returns {Object}
+ */
+async function GetI18NData (LangCode) {
+    // try to get the i18n data in KV.
+    let LangData = await AutoProxySpace.get(LangCode);
+
+    //if exist then return
+    if (LangData !== null) {
+        return JSON.parse(LangData);
+    }
+
+    // if not exist
+    // fetch the latest i18n data.
+    LangData = await fetch(`${GetI18NDataAPI}${LangCode}.json`)
+        .then(res => res.json())
+        .catch(() => undefined);
+    // if data correct then cache it in KV.
+    if (LangData !== undefined) {
+        AutoProxySpace.put(LangCode, JSON.stringify(LangData));
+        return LangData;
+    }
+    // if data not exist at github, get the EN data by default.
+    return GetI18NData("en")
+
+    /**
+     * @namespace LangData
+     * @property WorkersDevNotSupport {String}
+     * @property ReturnUsage {String}
+     * @property Introduce {String}
+     * @property Limit {String}
+     * @property Deploy {String}
+     * @property Copyright {String}
+     * @property DomainBlocked {String}
+     * @property DomainNotAllow {String}
+     * @property BlockList {String}
+     * @property AllowList {String}
+     * @property ConfError {String}
+     * @property RegionBlocked {String}
+     * @property IPBlocked {String}
+     */
+}
+
+/**
+ *
+ * @param url {String}
+ * @param name {String}
+ * @returns {string|null}
+ * @constructor
+ */
 function GetQueryString(url, name) {
     let reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)", "i");
     let r = url.search.slice(1).match(reg);
 
-    return (r !== null) ? r[2] : null;
+    return !!r ? r[2] : null;
 }

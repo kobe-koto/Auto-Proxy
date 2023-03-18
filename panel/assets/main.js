@@ -210,12 +210,12 @@ function GenConfig () {
 
     Config.BlockList =
         document.getElementById("BlockList").checked
-            ? document.getElementById("BlockListTextarea").value.toArray()
+            ? document.getElementById("BlockListTextarea").value.toLowerCase().toArray()
             : undefined;
 
     Config.AllowList =
         document.getElementById("AllowList").checked
-            ? document.getElementById("AllowListTextarea").value.toArray()
+            ? document.getElementById("AllowListTextarea").value.toLowerCase().toArray()
             : undefined;
 
     Config.DomainMap = document.getElementById("DomainMap").value.toObject()
