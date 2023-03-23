@@ -1,4 +1,6 @@
 # Auto-Proxy
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fkobe-koto%2FAuto-Proxy.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fkobe-koto%2FAuto-Proxy?ref=badge_shield)
+
 
 **一個適用於 CF Workers 的自動按網域代理的脚本！**
 
@@ -69,3 +71,7 @@
 10. 訪問您的自訂子域, 您將被重新導向到 Panel 頁面來配置 Auto-Proxy.
 
 ## 給個 STAR 吧秋梨膏! 
+
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fkobe-koto%2FAuto-Proxy.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fkobe-koto%2FAuto-Proxy?ref=badge_large)
